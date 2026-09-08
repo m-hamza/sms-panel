@@ -83,6 +83,26 @@ class IPPanelAPI {
     });
   }
 
+  // Send SMS - Peer to Peer
+  async sendPeerToPeer(data: {
+    from_number: string;
+    params: Array<{
+      recipients: string[];
+      message: string;
+    }>;
+    send_time?: string;
+  }): Promise<ApiResponse> {
+    return this.request('/api/send', {
+      method: 'POST',
+      body: JSON.stringify({
+        sending_type: 'peer_to_peer',
+        from_number: data.from_number,
+        params: data.params,
+        send_time: data.send_time,
+      }),
+    });
+  }
+
   // Send SMS - Phonebook
   async sendToPhonebook(data: {
     from_number: string;
@@ -129,9 +149,9 @@ class IPPanelAPI {
     });
   }
 
-  // Reports - Outbox by ID
+  // Reports - Outbox by ID (Full details)
   async getOutboxReportById(id: string): Promise<ApiResponse> {
-    return this.request(`/api/report/new_list/${id}`);
+    return this.request(`/api/report/by_bulk?messages_outbox_id=${id}`, { method: 'GET' });
   }
 
   // Reports - Bulk Stats

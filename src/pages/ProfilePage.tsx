@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Card, Button, Input, Badge, SectionHeader } from '../components/ui';
+import { toPersianNumber } from '../utils/date';
 
 export default function ProfilePage() {
   const {
@@ -100,12 +101,12 @@ export default function ProfilePage() {
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-surface-2 border border-border rounded-xl p-3">
               <p className="text-[11px] text-text-dim mb-1">شناسه کاربری</p>
-              <p className="text-sm font-semibold text-text">{userInfo?.user_id}</p>
+              <p className="text-sm font-semibold text-text">{toPersianNumber(userInfo?.user_id || 0)}</p>
             </div>
             <div className="bg-surface-2 border border-border rounded-xl p-3">
               <p className="text-[11px] text-text-dim mb-1">اعتبار</p>
               <p className="text-sm font-semibold text-emerald-400">
-                {credit ? Number(credit.credit).toLocaleString('fa-IR', { maximumFractionDigits: 0 }) : '-'}
+                {credit ? toPersianNumber(Number(credit.credit).toFixed(0)) : '-'}
               </p>
             </div>
           </div>
@@ -125,14 +126,7 @@ export default function ProfilePage() {
             <div className="flex justify-between items-center">
               <span className="text-xs text-text-dim">اعتبار فعلی</span>
               <span className="text-sm font-medium text-text">
-                {Number(credit.credit).toLocaleString('fa-IR', { maximumFractionDigits: 0 })} ریال
-              </span>
-            </div>
-            <div className="divider"></div>
-            <div className="flex justify-between items-center">
-              <span className="text-xs text-text-dim">اعتبار دیروز</span>
-              <span className="text-sm text-text-muted">
-                {Number(credit.yesterday_credit).toLocaleString('fa-IR', { maximumFractionDigits: 0 })} ریال
+                {toPersianNumber(Number(credit.credit).toFixed(0))} ریال
               </span>
             </div>
             {credit.gift > 0 && (
@@ -141,16 +135,11 @@ export default function ProfilePage() {
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-text-dim">هدیه</span>
                   <span className="text-sm font-medium text-amber-400">
-                    {Number(credit.gift).toLocaleString('fa-IR')} ریال
+                    {toPersianNumber(credit.gift)} ریال
                   </span>
                 </div>
               </>
             )}
-            <div className="divider"></div>
-            <div className="flex justify-between items-center">
-              <span className="text-xs text-text-dim">آخرین بروزرسانی</span>
-              <span className="text-[11px] text-text-dim font-mono" dir="ltr">{credit.updated_at}</span>
-            </div>
           </div>
         </Card>
       )}
@@ -164,7 +153,7 @@ export default function ProfilePage() {
             </div>
             <h3 className="text-sm font-medium text-text">خطوط من</h3>
           </div>
-          <Badge variant="neutral">{numbers.length}</Badge>
+          <Badge variant="neutral">{toPersianNumber(numbers.length)}</Badge>
         </div>
         <div className="space-y-2 max-h-48 overflow-y-auto">
           {numbers.map((num: any) => (
@@ -193,7 +182,7 @@ export default function ProfilePage() {
               <Activity className="w-4 h-4 text-purple-400" strokeWidth={1.5} />
             </div>
             <h3 className="text-sm font-medium text-text">مدیریت حساب‌ها</h3>
-            <Badge variant="neutral">{accounts.length}</Badge>
+            <Badge variant="neutral">{toPersianNumber(accounts.length)}</Badge>
           </div>
           <ChevronDown className={`w-4 h-4 text-text-dim transition-transform ${showAccounts ? 'rotate-180' : ''}`} />
         </button>

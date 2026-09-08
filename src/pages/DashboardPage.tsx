@@ -4,12 +4,14 @@ import api from '../api/ippanel';
 import {
   Send, Users, BookOpen, Smartphone, Zap,
   ChevronDown, CheckCircle, XCircle,
-  MessageSquare, Wallet, Radio, Sparkles
+  MessageSquare, Wallet, Radio, Sparkles,
+  FileText, Link, MapPin, Tag, Phone
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Card, Button, Input, Textarea, Select, Badge, SectionHeader, StatCard } from '../components/ui';
+import { toPersianNumber } from '../utils/date';
 
-type SendMode = 'single' | 'bulk' | 'phonebook' | 'mobile';
+type SendMode = 'single' | 'bulk' | 'phonebook' | 'mobile' | 'peer' | 'postal' | 'pattern';
 
 export default function DashboardPage() {
   const { numbers, phonebooks, credit } = useAuthStore();
@@ -18,8 +20,11 @@ export default function DashboardPage() {
   const modes = [
     { id: 'single' as SendMode, title: 'ارسال تکی', desc: 'به یک یا چند شماره', icon: Send, accent: 'indigo' as const },
     { id: 'bulk' as SendMode, title: 'ارسال دسته‌جمعی', desc: 'ارسال انبوه پیامک', icon: Zap, accent: 'violet' as const },
+    { id: 'peer' as SendMode, title: 'ارسال همتا‌به‌همتا', desc: 'پیام متفاوت به هر شماره', icon: Users, accent: 'sky' as const },
     { id: 'phonebook' as SendMode, title: 'دفترچه تلفن', desc: 'ارسال به مخاطبین', icon: BookOpen, accent: 'emerald' as const },
-    { id: 'mobile' as SendMode, title: 'از گوشی', desc: 'ارسال از شماره‌ها', icon: Smartphone, accent: 'amber' as const },
+    { id: 'mobile' as SendMode, title: 'از گوشی', desc: 'مخاطبین گوشی', icon: Smartphone, accent: 'amber' as const },
+    { id: 'postal' as SendMode, title: 'کد پستی', desc: 'ارسال بر اساس منطقه', icon: MapPin, accent: 'rose' as const },
+    { id: 'pattern' as SendMode, title: 'الگوی پیام', desc: 'ارسال با الگوی آماده', icon: Sparkles, accent: 'purple' as const },
   ];
 
   const accentColors: Record<string, string> = {
@@ -27,6 +32,9 @@ export default function DashboardPage() {
     violet: 'from-violet-500 to-purple-600 shadow-violet-500/20',
     emerald: 'from-emerald-500 to-emerald-600 shadow-emerald-500/20',
     amber: 'from-amber-500 to-orange-500 shadow-amber-500/20',
+    sky: 'from-sky-500 to-cyan-500 shadow-sky-500/20',
+    rose: 'from-rose-500 to-pink-500 shadow-rose-500/20',
+    purple: 'from-purple-500 to-fuchsia-500 shadow-purple-500/20',
   };
 
   return (
@@ -42,7 +50,7 @@ export default function DashboardPage() {
             <div className="flex items-center gap-2 bg-surface-2 border border-border rounded-xl px-3 py-2">
               <Wallet className="w-3.5 h-3.5 text-emerald-400" />
               <span className="text-xs font-medium text-text">
-                {Number(credit.credit).toLocaleString('fa-IR', { maximumFractionDigits: 0 })}
+                {toPersianNumber(Number(credit.credit).toFixed(0))}
               </span>
               <span className="text-[10px] text-text-dim">ریال</span>
             </div>
@@ -54,13 +62,13 @@ export default function DashboardPage() {
       <div className="grid grid-cols-2 gap-3 stagger">
         <StatCard
           label="خط فعال"
-          value={numbers.length}
+          value={toPersianNumber(numbers.length)}
           icon={<Radio className="w-4 h-4" strokeWidth={1.5} />}
           accent="indigo"
         />
         <StatCard
           label="دفترچه تلفن"
-          value={phonebooks.length}
+          value={toPersianNumber(phonebooks.length)}
           icon={<Users className="w-4 h-4" strokeWidth={1.5} />}
           accent="emerald"
         />
@@ -95,29 +103,6 @@ export default function DashboardPage() {
           onClose={() => setActiveMode(null)}
         />
       )}
-
-      {/* Features */}
-      <section className="animate-fade-in-up" style={{ animationDelay: '200ms' }}>
-        <SectionHeader title="امکانات" />
-        <Card className="divide-y divide-border">
-          {[
-            { title: 'ارسال پیامک انبوه', icon: Zap, status: true },
-            { title: 'گزارش‌گیری پیشرفته', icon: MessageSquare, status: true },
-            { title: 'مدیریت دفترچه تلفن', icon: Users, status: true },
-            { title: 'ارسال بر اساس الگو', icon: Sparkles, status: true },
-          ].map((item, i) => (
-            <div key={i} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-surface-2 border border-border flex items-center justify-center">
-                  <item.icon className="w-4 h-4 text-text-muted" strokeWidth={1.5} />
-                </div>
-                <span className="text-sm text-text">{item.title}</span>
-              </div>
-              <Badge variant="success">فعال</Badge>
-            </div>
-          ))}
-        </Card>
-      </section>
     </div>
   );
 }
@@ -135,6 +120,41 @@ function SendForm({ mode, numbers, phonebooks, onClose }: {
   const [selectedPhonebook, setSelectedPhonebook] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [showNumbers, setShowNumbers] = useState(false);
+  const [mobileContacts, setMobileContacts] = useState<Array<{name: string, phone: string}>>([]);
+  const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
+
+  const loadMobileContacts = async () => {
+    // Check if we're on mobile
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (!isMobile) {
+      toast.error('لطفاً از گوشی موبایل برای استفاده از این قابلیت استفاده کنید');
+      return;
+    }
+
+    // Request contacts permission
+    try {
+      // @ts-ignore - Contact Picker API
+      if ('contacts' in navigator && 'ContactsManager' in window) {
+        // @ts-ignore
+        const contacts = await navigator.contacts.select(['name', 'tel'], { multiple: true });
+        const formatted = contacts.map((c: any) => ({
+          name: c.name[0] || 'بدون نام',
+          phone: c.tel[0] || ''
+        }));
+        setMobileContacts(formatted);
+        toast.success(`${toPersianNumber(formatted.length)} مخاطب بارگذاری شد`);
+      } else {
+        toast.error('مرورگر شما از دسترسی به مخاطبین پشتیبانی نمی‌کند');
+      }
+    } catch (err: any) {
+      if (err.name === 'AbortError') {
+        toast('انتخاب لغو شد');
+      } else {
+        toast.error('خطا در دریافت مخاطبین');
+      }
+    }
+  };
 
   const handleSend = async () => {
     if (!selectedNumber || !message) {
@@ -156,6 +176,35 @@ function SendForm({ mode, numbers, phonebooks, onClose }: {
           from_number: selectedNumber,
           message,
           params: [{ phonebook_id: selectedPhonebook, type: 'all' }],
+        });
+      } else if (mode === 'mobile') {
+        if (selectedContacts.length === 0) {
+          toast.error('لطفاً حداقل یک مخاطب انتخاب کنید');
+          setIsSending(false);
+          return;
+        }
+        result = await api.sendSMS({
+          from_number: selectedNumber,
+          message,
+          recipients: selectedContacts,
+        });
+      } else if (mode === 'peer') {
+        // Peer to peer - each recipient gets different message
+        const recipientList = recipients
+          .split(/[\n,،]/)
+          .map(r => r.trim())
+          .filter(r => r.length > 0)
+          .map(r => r.startsWith('+') ? r : `+98${r.replace(/^0/, '')}`);
+
+        if (recipientList.length === 0) {
+          toast.error('لطفاً حداقل یک شماره گیرنده وارد کنید');
+          setIsSending(false);
+          return;
+        }
+
+        result = await api.sendPeerToPeer({
+          from_number: selectedNumber,
+          params: [{ recipients: recipientList, message }],
         });
       } else {
         const recipientList = recipients
@@ -193,8 +242,19 @@ function SendForm({ mode, numbers, phonebooks, onClose }: {
   const modeTitles: Record<SendMode, string> = {
     single: 'ارسال تکی',
     bulk: 'ارسال دسته‌جمعی',
+    peer: 'ارسال همتا‌به‌همتا',
     phonebook: 'ارسال به دفترچه تلفن',
     mobile: 'ارسال از گوشی',
+    postal: 'ارسال با کد پستی',
+    pattern: 'ارسال با الگو',
+  };
+
+  const toggleContact = (phone: string) => {
+    setSelectedContacts(prev => 
+      prev.includes(phone) 
+        ? prev.filter(p => p !== phone)
+        : [...prev, phone]
+    );
   };
 
   return (
@@ -249,8 +309,8 @@ function SendForm({ mode, numbers, phonebooks, onClose }: {
             </div>
           </div>
 
-          {/* Recipients */}
-          {mode !== 'phonebook' && (
+          {/* Recipients (not for phonebook mode) */}
+          {mode !== 'phonebook' && mode !== 'mobile' && (
             <div>
               <label className="block text-xs font-medium text-text-muted mb-1.5">
                 {mode === 'single' ? 'شماره گیرنده' : 'شماره‌های گیرنده (هر شماره در یک خط)'}
@@ -277,6 +337,44 @@ function SendForm({ mode, numbers, phonebooks, onClose }: {
             </div>
           )}
 
+          {/* Mobile Contacts */}
+          {mode === 'mobile' && (
+            <div>
+              <label className="block text-xs font-medium text-text-muted mb-1.5">مخاطبین گوشی</label>
+              {mobileContacts.length === 0 ? (
+                <Button
+                  variant="ghost"
+                  size="md"
+                  onClick={loadMobileContacts}
+                  icon={<Phone className="w-4 h-4" />}
+                  className="w-full"
+                >
+                  بارگذاری مخاطبین از گوشی
+                </Button>
+              ) : (
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {mobileContacts.map((contact, idx) => (
+                    <label key={idx} className="flex items-center gap-3 p-2 rounded-lg bg-surface-2 border border-border cursor-pointer hover:bg-surface transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={selectedContacts.includes(contact.phone)}
+                        onChange={() => toggleContact(contact.phone)}
+                        className="w-4 h-4 rounded"
+                      />
+                      <div className="flex-1">
+                        <p className="text-sm text-text">{contact.name}</p>
+                        <p className="text-xs text-text-dim font-mono" dir="ltr">{contact.phone}</p>
+                      </div>
+                    </label>
+                  ))}
+                  <p className="text-xs text-text-dim text-center mt-2">
+                    {toPersianNumber(selectedContacts.length)} مخاطب انتخاب شده
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Phonebook Select */}
           {mode === 'phonebook' && (
             <div>
@@ -288,7 +386,7 @@ function SendForm({ mode, numbers, phonebooks, onClose }: {
                 <option value="">انتخاب کنید...</option>
                 {phonebooks.map((pb: any) => (
                   <option key={pb.id} value={pb.id}>
-                    {pb.title} ({pb.count} مخاطب)
+                    {pb.title} ({toPersianNumber(pb.count)} مخاطب)
                   </option>
                 ))}
               </Select>
@@ -305,8 +403,8 @@ function SendForm({ mode, numbers, phonebooks, onClose }: {
               rows={4}
             />
             <div className="flex justify-between mt-1.5">
-              <span className="text-[11px] text-text-dim">{message.length} کاراکتر</span>
-              <span className="text-[11px] text-text-dim">{Math.ceil(message.length / 70)} بخش</span>
+              <span className="text-[11px] text-text-dim">{toPersianNumber(message.length)} کاراکتر</span>
+              <span className="text-[11px] text-text-dim">{toPersianNumber(Math.ceil(message.length / 70))} بخش</span>
             </div>
           </div>
 

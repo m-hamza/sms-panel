@@ -3,10 +3,11 @@ import api from '../api/ippanel';
 import {
   Search, Filter, ChevronLeft, ChevronRight,
   CheckCircle, XCircle, Clock, AlertCircle, RefreshCw,
-  FileText, Inbox
+  FileText, Inbox, X, Loader2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Card, Button, Input, Select, Badge, EmptyState, LoadingState, SectionHeader } from '../components/ui';
+import { toPersianDateTime, toPersianNumber, formatCost } from '../utils/date';
 
 const STATE_MAP: Record<number, { label: string; variant: 'success' | 'warning' | 'danger' | 'neutral' | 'info'; icon: any }> = {
   0: { label: 'در حال ایجاد', variant: 'neutral', icon: Clock },
@@ -28,6 +29,8 @@ export default function ReportsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedReport, setSelectedReport] = useState<any>(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
   const [filters, setFilters] = useState({
     number: '',
     message: '',
@@ -44,7 +47,7 @@ export default function ReportsPage() {
 
       const result = await api.getOutboxReport({
         page: pageNum,
-        limit: 15,
+        limit: 20,
         filters: Object.keys(filterObj).length > 0 ? filterObj : undefined,
       });
 
@@ -59,6 +62,22 @@ export default function ReportsPage() {
       toast.error(err.message || 'خطا در دریافت گزارشات');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchReportDetails = async (id: string) => {
+    setLoadingDetails(true);
+    try {
+      const result = await api.getOutboxReportById(id);
+      if (result.meta.status) {
+        setSelectedReport(result.data);
+      } else {
+        toast.error(result.meta.message);
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'خطا در دریافت جزئیات');
+    } finally {
+      setLoadingDetails(false);
     }
   };
 
@@ -81,19 +100,6 @@ export default function ReportsPage() {
     setFilters({ number: '', message: '', state_id: '' });
     setPage(1);
     fetchReports(1);
-  };
-
-  const formatTimestamp = (ts: string) => {
-    try {
-      const date = new Date(Number(ts) * 1000);
-      return date.toLocaleDateString('fa-IR') + ' ' + date.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
-    } catch {
-      return ts;
-    }
-  };
-
-  const formatCost = (cost: number) => {
-    return Number(cost).toLocaleString('fa-IR', { maximumFractionDigits: 0 });
   };
 
   return (
@@ -133,12 +139,12 @@ export default function ReportsPage() {
           </div>
           <div>
             <p className="text-xs text-text-dim">مجموع پیام‌ها</p>
-            <p className="text-lg font-bold text-text">{total.toLocaleString('fa-IR')}</p>
+            <p className="text-lg font-bold text-text">{toPersianNumber(total)}</p>
           </div>
         </div>
         <div className="text-left">
           <p className="text-[10px] text-text-dim">صفحه</p>
-          <p className="text-sm font-medium text-text">{page.toLocaleString('fa-IR')} / {totalPages.toLocaleString('fa-IR')}</p>
+          <p className="text-sm font-medium text-text">{toPersianNumber(page)} / {toPersianNumber(totalPages)}</p>
         </div>
       </Card>
 
@@ -205,7 +211,11 @@ export default function ReportsPage() {
             const state = STATE_MAP[report.state_id] || STATE_MAP[0];
             const StateIcon = state.icon;
             return (
-              <Card key={report.messages_outbox_id || idx} className="p-3.5">
+              <Card 
+                key={report.messages_outbox_id || idx} 
+                className="p-3.5 cursor-pointer card-interactive"
+                onClick={() => fetchReportDetails(report.messages_outbox_id)}
+              >
                 {/* Top row */}
                 <div className="flex items-start justify-between mb-2.5">
                   <div className="flex items-center gap-2.5">
@@ -227,7 +237,7 @@ export default function ReportsPage() {
                       <p className="text-[11px] text-text-dim mt-1 font-mono" dir="ltr">{report.number}</p>
                     </div>
                   </div>
-                  <span className="text-[11px] text-text-dim whitespace-nowrap">{formatTimestamp(report.time)}</span>
+                  <span className="text-[11px] text-text-dim whitespace-nowrap">{toPersianDateTime(report.time)}</span>
                 </div>
                 
                 {/* Message */}
@@ -236,10 +246,10 @@ export default function ReportsPage() {
                 {/* Footer */}
                 <div className="flex items-center justify-between pt-2 border-t border-border">
                   <div className="flex items-center gap-3 text-[11px] text-text-dim">
-                    <span>گیرندگان: <span className="text-text-muted">{Number(report.rcpts_count).toLocaleString('fa-IR')}</span></span>
-                    <span>ارسال: <span className="text-text-muted">{Number(report.exit_count).toLocaleString('fa-IR')}</span></span>
+                    <span>گیرندگان: <span className="text-text-muted">{toPersianNumber(report.rcpts_count)}</span></span>
+                    <span>ارسال: <span className="text-text-muted">{toPersianNumber(report.exit_count)}</span></span>
                   </div>
-                  <span className="text-xs font-medium text-emerald-400">{formatCost(report.cost)} ریال</span>
+                  <span className="text-xs font-medium text-emerald-400">{formatCost(report.cost)}</span>
                 </div>
               </Card>
             );
@@ -258,7 +268,7 @@ export default function ReportsPage() {
             <ChevronRight className="w-4 h-4" />
           </button>
           <span className="text-xs text-text-muted px-2">
-            {page.toLocaleString('fa-IR')} / {totalPages.toLocaleString('fa-IR')}
+            {toPersianNumber(page)} / {toPersianNumber(totalPages)}
           </span>
           <button
             onClick={() => handlePageChange(page + 1)}
@@ -269,6 +279,110 @@ export default function ReportsPage() {
           </button>
         </div>
       )}
+
+      {/* Report Details Modal */}
+      {selectedReport && (
+        <ReportDetailsModal 
+          report={selectedReport} 
+          onClose={() => setSelectedReport(null)} 
+        />
+      )}
+
+      {/* Loading Details Modal */}
+      {loadingDetails && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setLoadingDetails(false)}></div>
+          <div className="relative bg-surface border border-border rounded-2xl p-8">
+            <Loader2 className="w-8 h-8 text-accent animate-spin mx-auto mb-3" />
+            <p className="text-sm text-text-dim text-center">در حال بارگذاری جزئیات...</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Report Details Modal
+function ReportDetailsModal({ report, onClose }: { report: any; onClose: () => void }) {
+  const state = STATE_MAP[report.state_id] || STATE_MAP[0];
+  const StateIcon = state.icon;
+
+  const details = [
+    { label: 'شناسه پیام', value: report.messages_outbox_id, mono: true },
+    { label: 'وضعیت', value: state.label, badge: state.variant },
+    { label: 'شماره فرستنده', value: report.number, mono: true },
+    { label: 'نوع ارسال', value: report.type || 'نامشخص' },
+    { label: 'تاریخ ایجاد', value: toPersianDateTime(report.time) },
+    { label: 'تاریخ ارسال', value: toPersianDateTime(report.time_send) },
+    { label: 'تعداد گیرندگان', value: toPersianNumber(report.rcpts_count) },
+    { label: 'تعداد ارسال شده', value: toPersianNumber(report.exit_count) },
+    { label: 'هزینه', value: formatCost(report.cost) },
+    { label: 'نام کاربری', value: report.username || 'نامشخص' },
+    { label: 'شناسه کاربر', value: report.user_id || 'نامشخص', mono: true },
+    { label: 'آی‌پی کاربر', value: report.user_ip || 'نامشخص', mono: true },
+    { label: 'اعتبارسنجی', value: report.valid || 'نامشخص' },
+    { label: 'بخش', value: report.part || 'نامشخص' },
+    { label: 'شناسه والد', value: report.parent_id || 'نامشخص', mono: true },
+    { label: 'شناسه خط', value: report.number_id || 'نامشخص', mono: true },
+    { label: 'خط تحویل', value: report.in_delivery_line ? 'بله' : 'خیر' },
+    { label: 'خلاصه', value: report.summary || 'ندارد' },
+    { label: 'دلیل رد', value: report.reject_comment || 'ندارد' },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose}></div>
+      <div className="relative w-full max-w-md bg-surface border border-border rounded-t-3xl sm:rounded-2xl p-5 pb-8 sm:pb-5 max-h-[90vh] overflow-y-auto animate-slide-in-bottom">
+        <div className="sm:hidden w-10 h-1 bg-border-strong rounded-full mx-auto mb-4"></div>
+        
+        {/* Header */}
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-2.5">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+              state.variant === 'success' ? 'bg-success/10' :
+              state.variant === 'danger' ? 'bg-danger/10' :
+              state.variant === 'warning' ? 'bg-warning/10' :
+              'bg-surface-2 border border-border'
+            }`}>
+              <StateIcon className={`w-5 h-5 ${
+                state.variant === 'success' ? 'text-success' :
+                state.variant === 'danger' ? 'text-danger' :
+                state.variant === 'warning' ? 'text-warning' :
+                'text-text-muted'
+              }`} strokeWidth={1.5} />
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-text">جزئیات پیام</h3>
+              <p className="text-xs text-text-dim">{state.label}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-lg bg-surface-2 border border-border flex items-center justify-center text-text-dim hover:text-text transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Message Content */}
+        <div className="bg-surface-2 border border-border rounded-xl p-3 mb-4">
+          <p className="text-xs text-text-dim mb-1">متن پیام:</p>
+          <p className="text-sm text-text leading-relaxed">{report.message}</p>
+        </div>
+
+        {/* Details Grid */}
+        <div className="space-y-2">
+          {details.map((item, idx) => (
+            <div key={idx} className="flex justify-between items-center py-2 border-b border-border last:border-0">
+              <span className="text-xs text-text-dim">{item.label}</span>
+              {item.badge ? (
+                <Badge variant={item.badge}>{item.value}</Badge>
+              ) : (
+                <span className={`text-sm text-text ${item.mono ? 'font-mono text-xs' : ''}`} dir={item.mono ? 'ltr' : 'rtl'}>
+                  {item.value}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
