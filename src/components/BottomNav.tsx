@@ -1,51 +1,70 @@
-import { MessageSquare, BarChart3, User } from 'lucide-react';
+import { LayoutDashboard, FileBarChart, UserCircle } from 'lucide-react';
 
 type Page = 'dashboard' | 'reports' | 'profile';
 
 interface BottomNavProps {
   activePage: Page;
-  onNavigate: (page: Page) => void;
+  onPageChange: (page: Page) => void;
 }
 
-export default function BottomNav({ activePage, onNavigate }: BottomNavProps) {
-  const items = [
-    { id: 'dashboard' as Page, label: 'پیشخوان', icon: MessageSquare },
-    { id: 'reports' as Page, label: 'گزارشات', icon: BarChart3 },
-    { id: 'profile' as Page, label: 'پروفایل', icon: User },
+export default function BottomNav({ activePage, onPageChange }: BottomNavProps) {
+  const navItems = [
+    { id: 'dashboard' as Page, label: 'پیشخوان', icon: LayoutDashboard },
+    { id: 'reports' as Page, label: 'گزارشات', icon: FileBarChart },
+    { id: 'profile' as Page, label: 'پروفایل', icon: UserCircle },
   ];
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50">
-      <div className="glass border-t border-slate-700/50">
-        <div className="flex items-center justify-around px-4 py-2 max-w-lg mx-auto">
-          {items.map((item) => {
-            const isActive = activePage === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => onNavigate(item.id)}
-                className={`flex flex-col items-center gap-1 py-1.5 px-4 rounded-xl transition-all ${
-                  isActive
-                    ? 'text-blue-400'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <div className={`relative ${isActive ? 'scale-110' : ''} transition-transform`}>
-                  <item.icon className="w-5 h-5" />
+      {/* Gradient fade above nav */}
+      <div className="h-6 bg-gradient-to-t from-[#050a18] to-transparent pointer-events-none"></div>
+      
+      {/* Nav Container */}
+      <div className="relative">
+        {/* Top border glow */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-[1px] bg-gradient-to-r from-transparent via-blue-500/20 to-transparent"></div>
+        
+        <nav className="bg-[#0a0f1e]/95 backdrop-blur-xl border-t border-slate-800/50 px-4 pb-5 pt-2">
+          <div className="flex items-center justify-around max-w-md mx-auto">
+            {navItems.map((item) => {
+              const isActive = activePage === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => onPageChange(item.id)}
+                  className={`relative flex flex-col items-center gap-1 py-2 px-5 rounded-xl transition-all duration-300 ${
+                    isActive ? 'scale-105' : 'opacity-60 hover:opacity-90'
+                  }`}
+                >
+                  {/* Active indicator */}
                   {isActive && (
-                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-blue-400"></div>
+                    <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-8 h-1 rounded-b-full bg-gradient-to-r from-blue-500 to-purple-500 shadow-lg shadow-blue-500/30"></div>
                   )}
-                </div>
-                <span className={`text-[10px] font-medium ${isActive ? 'text-blue-400' : ''}`}>
-                  {item.label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+                  
+                  {/* Icon */}
+                  <div className={`relative p-1.5 rounded-xl transition-all duration-300 ${
+                    isActive ? 'bg-blue-500/10' : ''
+                  }`}>
+                    <item.icon className={`w-5 h-5 transition-colors duration-300 ${
+                      isActive ? 'text-blue-400' : 'text-slate-400'
+                    }`} strokeWidth={isActive ? 2 : 1.5} />
+                    {isActive && (
+                      <div className="absolute inset-0 rounded-xl bg-blue-400/10 animate-pulse"></div>
+                    )}
+                  </div>
+                  
+                  {/* Label */}
+                  <span className={`text-[10px] font-medium transition-colors duration-300 ${
+                    isActive ? 'text-blue-400' : 'text-slate-500'
+                  }`}>
+                    {item.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </nav>
       </div>
-      {/* Safe area for mobile */}
-      <div className="h-[env(safe-area-inset-bottom)] bg-slate-900/90"></div>
     </div>
   );
 }
