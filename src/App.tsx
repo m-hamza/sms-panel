@@ -21,49 +21,43 @@ function App() {
 
   if (!isInitialized) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#050a18]">
-        <div className="text-center">
+      <div className="min-h-screen flex items-center justify-center bg-bg">
+        <div className="text-center animate-fade-in">
           <div className="relative inline-flex items-center justify-center mb-4">
-            <div className="absolute w-16 h-16 rounded-full border border-blue-500/20 animate-spin-slow"></div>
-            <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center shadow-xl shadow-blue-500/20">
+            <div className="absolute w-16 h-16 rounded-full border border-accent/20 animate-spin-slow"></div>
+            <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center shadow-lg shadow-indigo-500/20">
               <MessageSquare className="w-6 h-6 text-white" strokeWidth={1.5} />
             </div>
           </div>
-          <p className="text-slate-500 text-sm">در حال بارگذاری...</p>
+          <p className="text-xs text-text-dim">در حال بارگذاری...</p>
         </div>
       </div>
     );
   }
 
+  const toastOptions = {
+    style: {
+      background: 'rgba(12, 18, 32, 0.95)',
+      color: '#e5e7eb',
+      border: '1px solid rgba(148, 163, 184, 0.1)',
+      borderRadius: '12px',
+      fontSize: '13px',
+      backdropFilter: 'blur(12px)',
+      boxShadow: '0 20px 40px -10px rgba(0,0,0,0.5)',
+      padding: '12px 16px',
+    },
+    success: {
+      iconTheme: { primary: '#10b981', secondary: '#070b14' },
+    },
+    error: {
+      iconTheme: { primary: '#ef4444', secondary: '#070b14' },
+    },
+  };
+
   if (!isAuthenticated) {
     return (
       <>
-        <Toaster
-          position="top-center"
-          toastOptions={{
-            style: {
-              background: 'rgba(15, 23, 42, 0.95)',
-              color: '#e2e8f0',
-              border: '1px solid rgba(51, 65, 85, 0.5)',
-              borderRadius: '12px',
-              fontSize: '13px',
-              backdropFilter: 'blur(10px)',
-              boxShadow: '0 20px 40px -10px rgba(0,0,0,0.5)',
-            },
-            success: {
-              iconTheme: {
-                primary: '#10b981',
-                secondary: '#050a18',
-              },
-            },
-            error: {
-              iconTheme: {
-                primary: '#ef4444',
-                secondary: '#050a18',
-              },
-            },
-          }}
-        />
+        <Toaster position="top-center" toastOptions={toastOptions} />
         <LoginPage />
       </>
     );
@@ -83,39 +77,13 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050a18] max-w-lg mx-auto relative overflow-hidden">
+    <div className="min-h-screen bg-bg max-w-lg mx-auto relative noise-bg">
       {/* Background ambient */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-blue-600/3 rounded-full blur-[100px]"></div>
-        <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-purple-600/3 rounded-full blur-[80px]"></div>
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-indigo-600/3 rounded-full blur-[100px]"></div>
       </div>
       
-      <Toaster
-        position="top-center"
-        toastOptions={{
-          style: {
-            background: 'rgba(15, 23, 42, 0.95)',
-            color: '#e2e8f0',
-            border: '1px solid rgba(51, 65, 85, 0.5)',
-            borderRadius: '12px',
-            fontSize: '13px',
-            backdropFilter: 'blur(10px)',
-            boxShadow: '0 20px 40px -10px rgba(0,0,0,0.5)',
-          },
-          success: {
-            iconTheme: {
-              primary: '#10b981',
-              secondary: '#050a18',
-            },
-          },
-          error: {
-            iconTheme: {
-              primary: '#ef4444',
-              secondary: '#050a18',
-            },
-          },
-        }}
-      />
+      <Toaster position="top-center" toastOptions={toastOptions} />
       
       {/* Main Content */}
       <main className="relative z-10 min-h-screen">
