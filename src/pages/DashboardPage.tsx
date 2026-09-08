@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Card, Button, Input, Textarea, Select, Badge, SectionHeader, StatCard } from '../components/ui';
-import { toPersianNumber } from '../utils/date';
+import { toPersianNumber, formatPhoneNumber, parsePhoneNumbers } from '../utils/date';
 
 type SendMode = 'single' | 'bulk' | 'phonebook' | 'mobile' | 'peer' | 'postal' | 'pattern';
 
@@ -140,7 +140,7 @@ function SendForm({ mode, numbers, phonebooks, onClose }: {
         const contacts = await navigator.contacts.select(['name', 'tel'], { multiple: true });
         const formatted = contacts.map((c: any) => ({
           name: c.name[0] || 'بدون نام',
-          phone: c.tel[0] || ''
+          phone: formatPhoneNumber(c.tel[0] || '')
         }));
         setMobileContacts(formatted);
         toast.success(`${toPersianNumber(formatted.length)} مخاطب بارگذاری شد`);
@@ -165,6 +165,7 @@ function SendForm({ mode, numbers, phonebooks, onClose }: {
     setIsSending(true);
     try {
       let result;
+      const formattedFromNumber = formatPhoneNumber(selectedNumber);
       
       if (mode === 'phonebook') {
         if (!selectedPhonebook) {
@@ -173,7 +174,7 @@ function SendForm({ mode, numbers, phonebooks, onClose }: {
           return;
         }
         result = await api.sendToPhonebook({
-          from_number: selectedNumber,
+          from_number: formattedFromNumber,
           message,
           params: [{ phonebook_id: selectedPhonebook, type: 'all' }],
         });
@@ -183,18 +184,16 @@ function SendForm({ mode, numbers, phonebooks, onClose }: {
           setIsSending(false);
           return;
         }
+        // Format all contact numbers
+        const formattedContacts = selectedContacts.map(phone => formatPhoneNumber(phone));
         result = await api.sendSMS({
-          from_number: selectedNumber,
+          from_number: formattedFromNumber,
           message,
-          recipients: selectedContacts,
+          recipients: formattedContacts,
         });
       } else if (mode === 'peer') {
         // Peer to peer - each recipient gets different message
-        const recipientList = recipients
-          .split(/[\n,،]/)
-          .map(r => r.trim())
-          .filter(r => r.length > 0)
-          .map(r => r.startsWith('+') ? r : `+98${r.replace(/^0/, '')}`);
+        const recipientList = parsePhoneNumbers(recipients);
 
         if (recipientList.length === 0) {
           toast.error('لطفاً حداقل یک شماره گیرنده وارد کنید');
@@ -203,15 +202,11 @@ function SendForm({ mode, numbers, phonebooks, onClose }: {
         }
 
         result = await api.sendPeerToPeer({
-          from_number: selectedNumber,
+          from_number: formattedFromNumber,
           params: [{ recipients: recipientList, message }],
         });
       } else {
-        const recipientList = recipients
-          .split(/[\n,،]/)
-          .map(r => r.trim())
-          .filter(r => r.length > 0)
-          .map(r => r.startsWith('+') ? r : `+98${r.replace(/^0/, '')}`);
+        const recipientList = parsePhoneNumbers(recipients);
 
         if (recipientList.length === 0) {
           toast.error('لطفاً حداقل یک شماره گیرنده وارد کنید');
@@ -220,7 +215,7 @@ function SendForm({ mode, numbers, phonebooks, onClose }: {
         }
 
         result = await api.sendSMS({
-          from_number: selectedNumber,
+          from_number: formattedFromNumber,
           message,
           recipients: recipientList,
         });

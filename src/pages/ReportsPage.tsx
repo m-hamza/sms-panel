@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Card, Button, Input, Select, Badge, EmptyState, LoadingState, SectionHeader } from '../components/ui';
-import { toPersianDateTime, toPersianNumber, formatCost } from '../utils/date';
+import { toPersianDateTime, toPersianNumber, formatCost, formatPhoneNumber } from '../utils/date';
 
 const STATE_MAP: Record<number, { label: string; variant: 'success' | 'warning' | 'danger' | 'neutral' | 'info'; icon: any }> = {
   0: { label: 'در حال ایجاد', variant: 'neutral', icon: Clock },
@@ -41,7 +41,7 @@ export default function ReportsPage() {
     setLoading(true);
     try {
       const filterObj: Record<string, any> = {};
-      if (filters.number) filterObj.number = filters.number;
+      if (filters.number) filterObj.number = formatPhoneNumber(filters.number);
       if (filters.message) filterObj.message = filters.message;
       if (filters.state_id) filterObj.state_id = filters.state_id;
 
