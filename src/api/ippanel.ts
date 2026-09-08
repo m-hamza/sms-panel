@@ -228,9 +228,30 @@ class IPPanelAPI {
     });
   }
 
-  // Patterns
-  async getPatterns(page = 1, perPage = 100): Promise<ApiResponse> {
-    return this.request(`/api/pattern/list?page=${page}&per_page=${perPage}`);
+  // Patterns - List all patterns
+  async getPatterns(page = 1, perPage = 100, filters?: {
+    code?: string;
+    title?: string;
+    is_share?: boolean;
+    state?: string;
+    type?: string;
+  }): Promise<ApiResponse> {
+    let url = `/api/patterns?page=${page}&per_page=${perPage}`;
+    
+    if (filters) {
+      if (filters.code) url += `&filter[code]=${filters.code}`;
+      if (filters.title) url += `&filter[title]=${filters.title}`;
+      if (filters.is_share !== undefined) url += `&filter[is_share]=${filters.is_share}`;
+      if (filters.state) url += `&filter[state]=${filters.state}`;
+      if (filters.type) url += `&filter[type]=${filters.type}`;
+    }
+    
+    return this.request(url);
+  }
+
+  // Pattern - Get pattern by code
+  async getPatternByCode(code: string): Promise<ApiResponse> {
+    return this.request(`/api/patterns/${code}`);
   }
 }
 

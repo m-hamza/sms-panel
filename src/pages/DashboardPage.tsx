@@ -24,7 +24,8 @@ export default function DashboardPage() {
 
   const loadPatterns = async () => {
     try {
-      const result = await api.getPatterns(1, 100);
+      // فقط الگوهای فعال را دریافت کن
+      const result = await api.getPatterns(1, 100, { state: 'active' });
       if (result.meta.status) {
         setPatterns(result.data || []);
       }
@@ -198,6 +199,15 @@ function SendForm({ mode, numbers, phonebooks, patterns, onClose }: {
           setIsSending(false);
           return;
         }
+        // بررسی اینکه همه پارامترهای مورد نیاز پر شده باشند
+        if (selectedPatternData?.variable) {
+          const missingParams = selectedPatternData.variable.filter((v: any) => !patternParams[v.name]);
+          if (missingParams.length > 0) {
+            toast.error(`لطفاً مقدار ${missingParams.map((v: any) => v.name).join('، ')} را وارد کنید`);
+            setIsSending(false);
+            return;
+          }
+        }
         result = await api.sendPatternSMS({
           from_number: formattedFromNumber,
           code: selectedPattern,
@@ -309,7 +319,7 @@ function SendForm({ mode, numbers, phonebooks, patterns, onClose }: {
     );
   };
 
-  const selectedPatternData = patterns.find(p => p.code === selectedPattern);
+  const selectedPatternData = patterns.find(p => p.pattern_code === selectedPattern);
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
@@ -373,27 +383,45 @@ function SendForm({ mode, numbers, phonebooks, patterns, onClose }: {
                 >
                   <option value="">انتخاب کنید...</option>
                   {patterns.map((p: any) => (
-                    <option key={p.code} value={p.code}>
-                      {p.name || p.code}
+                    <option key={p.pattern_code} value={p.pattern_code}>
+                      {p.title || p.pattern_code}
                     </option>
                   ))}
                 </Select>
+                {patterns.length === 0 && (
+                  <p className="text-xs text-text-dim mt-2">هیچ الگوی فعالی یافت نشد</p>
+                )}
               </div>
 
-              {/* Pattern Parameters */}
+              {/* Pattern Details */}
               {selectedPatternData && (
-                <div className="space-y-2">
-                  <label className="block text-xs font-medium text-text-muted">پارامترهای الگو</label>
-                  {selectedPatternData.params?.map((param: any) => (
-                    <div key={param.name}>
-                      <label className="block text-xs text-text-dim mb-1">{param.name}</label>
-                      <Input
-                        value={patternParams[param.name] || ''}
-                        onChange={(e) => setPatternParams({ ...patternParams, [param.name]: e.target.value })}
-                        placeholder={`مقدار ${param.name}`}
-                      />
+                <div className="bg-surface-2 border border-border rounded-xl p-3 space-y-3">
+                  <div>
+                    <label className="block text-xs text-text-dim mb-1">متن الگو:</label>
+                    <p className="text-sm text-text leading-relaxed whitespace-pre-wrap">
+                      {selectedPatternData.pattern_message}
+                    </p>
+                  </div>
+                  
+                  {/* Pattern Variables */}
+                  {selectedPatternData.variable && selectedPatternData.variable.length > 0 && (
+                    <div className="space-y-2">
+                      <label className="block text-xs font-medium text-text-muted">پارامترهای الگو</label>
+                      {selectedPatternData.variable.map((v: any) => (
+                        <div key={v.name}>
+                          <label className="block text-xs text-text-dim mb-1">
+                            {v.name} 
+                            {v.type && <span className="text-text-dim/60 mr-1">({v.type})</span>}
+                          </label>
+                          <Input
+                            value={patternParams[v.name] || ''}
+                            onChange={(e) => setPatternParams({ ...patternParams, [v.name]: e.target.value })}
+                            placeholder={`مقدار ${v.name}`}
+                          />
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
               )}
 
@@ -407,6 +435,9 @@ function SendForm({ mode, numbers, phonebooks, patterns, onClose }: {
                   dir="ltr"
                   className="font-mono"
                 />
+                <p className="text-[11px] text-text-dim mt-1">
+                  توجه: در ارسال الگو فقط یک گیرنده مجاز است
+                </p>
               </div>
             </>
           )}
