@@ -1,29 +1,44 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuthStore } from '../store/authStore';
 import api from '../api/ippanel';
 import {
   Send, Users, BookOpen, Smartphone, Zap,
   ChevronDown, CheckCircle, XCircle,
   MessageSquare, Wallet, Radio, Sparkles,
-  FileText, Link, MapPin, Tag, Phone
+  FileText, Link, MapPin, Tag, Phone, Plus
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Card, Button, Input, Textarea, Select, Badge, SectionHeader, StatCard } from '../components/ui';
 import { toPersianNumber, formatPhoneNumber, parsePhoneNumbers } from '../utils/date';
 
-type SendMode = 'single' | 'bulk' | 'phonebook' | 'mobile' | 'peer' | 'postal' | 'pattern';
+type SendMode = 'single' | 'bulk' | 'phonebook' | 'mobile' | 'peer' | 'pattern';
 
 export default function DashboardPage() {
   const { numbers, phonebooks, credit } = useAuthStore();
+  const [patterns, setPatterns] = useState<any[]>([]);
   const [activeMode, setActiveMode] = useState<SendMode | null>(null);
 
+  useEffect(() => {
+    loadPatterns();
+  }, []);
+
+  const loadPatterns = async () => {
+    try {
+      const result = await api.getPatterns(1, 100);
+      if (result.meta.status) {
+        setPatterns(result.data || []);
+      }
+    } catch (err) {
+      console.error('Error loading patterns:', err);
+    }
+  };
+
   const modes = [
-    { id: 'single' as SendMode, title: 'ارسال تکی', desc: 'به یک یا چند شماره', icon: Send, accent: 'indigo' as const },
-    { id: 'bulk' as SendMode, title: 'ارسال دسته‌جمعی', desc: 'ارسال انبوه پیامک', icon: Zap, accent: 'violet' as const },
-    { id: 'peer' as SendMode, title: 'ارسال همتا‌به‌همتا', desc: 'پیام متفاوت به هر شماره', icon: Users, accent: 'sky' as const },
+    { id: 'single' as SendMode, title: 'ارسال تکی', desc: 'به یک شماره', icon: Send, accent: 'indigo' as const },
+    { id: 'bulk' as SendMode, title: 'ارسال دسته‌جمعی', desc: 'به چند شماره', icon: Zap, accent: 'violet' as const },
+    { id: 'peer' as SendMode, title: 'همتا‌به‌همتا', desc: 'پیام متفاوت به هر شماره', icon: Users, accent: 'sky' as const },
     { id: 'phonebook' as SendMode, title: 'دفترچه تلفن', desc: 'ارسال به مخاطبین', icon: BookOpen, accent: 'emerald' as const },
     { id: 'mobile' as SendMode, title: 'از گوشی', desc: 'مخاطبین گوشی', icon: Smartphone, accent: 'amber' as const },
-    { id: 'postal' as SendMode, title: 'کد پستی', desc: 'ارسال بر اساس منطقه', icon: MapPin, accent: 'rose' as const },
     { id: 'pattern' as SendMode, title: 'الگوی پیام', desc: 'ارسال با الگوی آماده', icon: Sparkles, accent: 'purple' as const },
   ];
 
@@ -100,6 +115,7 @@ export default function DashboardPage() {
           mode={activeMode}
           numbers={numbers}
           phonebooks={phonebooks}
+          patterns={patterns}
           onClose={() => setActiveMode(null)}
         />
       )}
@@ -108,10 +124,11 @@ export default function DashboardPage() {
 }
 
 // Send Form Component
-function SendForm({ mode, numbers, phonebooks, onClose }: {
+function SendForm({ mode, numbers, phonebooks, patterns, onClose }: {
   mode: SendMode;
   numbers: any[];
   phonebooks: any[];
+  patterns: any[];
   onClose: () => void;
 }) {
   const [selectedNumber, setSelectedNumber] = useState('');
@@ -122,9 +139,12 @@ function SendForm({ mode, numbers, phonebooks, onClose }: {
   const [showNumbers, setShowNumbers] = useState(false);
   const [mobileContacts, setMobileContacts] = useState<Array<{name: string, phone: string}>>([]);
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
+  
+  // Pattern fields
+  const [selectedPattern, setSelectedPattern] = useState('');
+  const [patternParams, setPatternParams] = useState<Record<string, string>>({});
 
   const loadMobileContacts = async () => {
-    // Check if we're on mobile
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
     if (!isMobile) {
@@ -132,7 +152,6 @@ function SendForm({ mode, numbers, phonebooks, onClose }: {
       return;
     }
 
-    // Request contacts permission
     try {
       // @ts-ignore - Contact Picker API
       if ('contacts' in navigator && 'ContactsManager' in window) {
@@ -157,8 +176,8 @@ function SendForm({ mode, numbers, phonebooks, onClose }: {
   };
 
   const handleSend = async () => {
-    if (!selectedNumber || !message) {
-      toast.error('لطفاً شماره فرستنده و متن پیام را وارد کنید');
+    if (!selectedNumber) {
+      toast.error('لطفاً شماره فرستنده را انتخاب کنید');
       return;
     }
 
@@ -167,9 +186,32 @@ function SendForm({ mode, numbers, phonebooks, onClose }: {
       let result;
       const formattedFromNumber = formatPhoneNumber(selectedNumber);
       
-      if (mode === 'phonebook') {
+      if (mode === 'pattern') {
+        if (!selectedPattern) {
+          toast.error('لطفاً الگو را انتخاب کنید');
+          setIsSending(false);
+          return;
+        }
+        const recipientList = parsePhoneNumbers(recipients);
+        if (recipientList.length === 0) {
+          toast.error('لطفاً شماره گیرنده را وارد کنید');
+          setIsSending(false);
+          return;
+        }
+        result = await api.sendPatternSMS({
+          from_number: formattedFromNumber,
+          code: selectedPattern,
+          recipients: [recipientList[0]], // Only one recipient for pattern
+          params: patternParams,
+        });
+      } else if (mode === 'phonebook') {
         if (!selectedPhonebook) {
           toast.error('لطفاً دفترچه تلفن را انتخاب کنید');
+          setIsSending(false);
+          return;
+        }
+        if (!message) {
+          toast.error('لطفاً متن پیام را وارد کنید');
           setIsSending(false);
           return;
         }
@@ -184,7 +226,11 @@ function SendForm({ mode, numbers, phonebooks, onClose }: {
           setIsSending(false);
           return;
         }
-        // Format all contact numbers
+        if (!message) {
+          toast.error('لطفاً متن پیام را وارد کنید');
+          setIsSending(false);
+          return;
+        }
         const formattedContacts = selectedContacts.map(phone => formatPhoneNumber(phone));
         result = await api.sendSMS({
           from_number: formattedFromNumber,
@@ -192,22 +238,34 @@ function SendForm({ mode, numbers, phonebooks, onClose }: {
           recipients: formattedContacts,
         });
       } else if (mode === 'peer') {
-        // Peer to peer - each recipient gets different message
-        const recipientList = parsePhoneNumbers(recipients);
+        // Parse peer-to-peer format: phone|message
+        const lines = recipients.split('\n').filter(l => l.trim());
+        const params = lines.map(line => {
+          const parts = line.split('|').map(p => p.trim());
+          return {
+            recipients: [formatPhoneNumber(parts[0])],
+            message: parts[1] || message,
+          };
+        });
 
-        if (recipientList.length === 0) {
-          toast.error('لطفاً حداقل یک شماره گیرنده وارد کنید');
+        if (params.length === 0) {
+          toast.error('لطفاً حداقل یک شماره و پیام وارد کنید');
           setIsSending(false);
           return;
         }
 
         result = await api.sendPeerToPeer({
           from_number: formattedFromNumber,
-          params: [{ recipients: recipientList, message }],
+          params,
         });
       } else {
+        // Single or Bulk
+        if (!message) {
+          toast.error('لطفاً متن پیام را وارد کنید');
+          setIsSending(false);
+          return;
+        }
         const recipientList = parsePhoneNumbers(recipients);
-
         if (recipientList.length === 0) {
           toast.error('لطفاً حداقل یک شماره گیرنده وارد کنید');
           setIsSending(false);
@@ -240,7 +298,6 @@ function SendForm({ mode, numbers, phonebooks, onClose }: {
     peer: 'ارسال همتا‌به‌همتا',
     phonebook: 'ارسال به دفترچه تلفن',
     mobile: 'ارسال از گوشی',
-    postal: 'ارسال با کد پستی',
     pattern: 'ارسال با الگو',
   };
 
@@ -252,17 +309,15 @@ function SendForm({ mode, numbers, phonebooks, onClose }: {
     );
   };
 
+  const selectedPatternData = patterns.find(p => p.code === selectedPattern);
+
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose}></div>
       
-      {/* Modal */}
       <div className="relative w-full max-w-md bg-surface border border-border rounded-t-3xl sm:rounded-2xl p-5 pb-8 sm:pb-5 max-h-[90vh] overflow-y-auto animate-slide-in-bottom">
-        {/* Handle bar (mobile) */}
         <div className="sm:hidden w-10 h-1 bg-border-strong rounded-full mx-auto mb-4"></div>
         
-        {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-base font-semibold text-text">{modeTitles[mode]}</h3>
           <button onClick={onClose} className="w-8 h-8 rounded-lg bg-surface-2 border border-border flex items-center justify-center text-text-dim hover:text-text transition-colors">
@@ -304,13 +359,46 @@ function SendForm({ mode, numbers, phonebooks, onClose }: {
             </div>
           </div>
 
-          {/* Recipients (not for phonebook mode) */}
-          {mode !== 'phonebook' && mode !== 'mobile' && (
-            <div>
-              <label className="block text-xs font-medium text-text-muted mb-1.5">
-                {mode === 'single' ? 'شماره گیرنده' : 'شماره‌های گیرنده (هر شماره در یک خط)'}
-              </label>
-              {mode === 'single' ? (
+          {/* Pattern Selection */}
+          {mode === 'pattern' && (
+            <>
+              <div>
+                <label className="block text-xs font-medium text-text-muted mb-1.5">الگوی پیام</label>
+                <Select
+                  value={selectedPattern}
+                  onChange={(e) => {
+                    setSelectedPattern(e.target.value);
+                    setPatternParams({});
+                  }}
+                >
+                  <option value="">انتخاب کنید...</option>
+                  {patterns.map((p: any) => (
+                    <option key={p.code} value={p.code}>
+                      {p.name || p.code}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+
+              {/* Pattern Parameters */}
+              {selectedPatternData && (
+                <div className="space-y-2">
+                  <label className="block text-xs font-medium text-text-muted">پارامترهای الگو</label>
+                  {selectedPatternData.params?.map((param: any) => (
+                    <div key={param.name}>
+                      <label className="block text-xs text-text-dim mb-1">{param.name}</label>
+                      <Input
+                        value={patternParams[param.name] || ''}
+                        onChange={(e) => setPatternParams({ ...patternParams, [param.name]: e.target.value })}
+                        placeholder={`مقدار ${param.name}`}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-medium text-text-muted mb-1.5">شماره گیرنده</label>
                 <Input
                   type="tel"
                   value={recipients}
@@ -319,16 +407,24 @@ function SendForm({ mode, numbers, phonebooks, onClose }: {
                   dir="ltr"
                   className="font-mono"
                 />
-              ) : (
-                <Textarea
-                  value={recipients}
-                  onChange={(e) => setRecipients(e.target.value)}
-                  placeholder={"09120000000\n09350000000"}
-                  rows={3}
-                  dir="ltr"
-                  className="font-mono"
-                />
-              )}
+              </div>
+            </>
+          )}
+
+          {/* Recipients for non-pattern modes */}
+          {mode !== 'pattern' && mode !== 'phonebook' && mode !== 'mobile' && (
+            <div>
+              <label className="block text-xs font-medium text-text-muted mb-1.5">
+                {mode === 'peer' ? 'شماره و پیام (هر خط: شماره|پیام)' : 'شماره‌های گیرنده (هر شماره در یک خط)'}
+              </label>
+              <Textarea
+                value={recipients}
+                onChange={(e) => setRecipients(e.target.value)}
+                placeholder={mode === 'peer' ? '09120000000|سلام\n09350000000|درود' : '09120000000\n09350000000'}
+                rows={4}
+                dir="ltr"
+                className="font-mono"
+              />
             </div>
           )}
 
@@ -388,20 +484,22 @@ function SendForm({ mode, numbers, phonebooks, onClose }: {
             </div>
           )}
 
-          {/* Message */}
-          <div>
-            <label className="block text-xs font-medium text-text-muted mb-1.5">متن پیام</label>
-            <Textarea
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="متن پیامک خود را وارد کنید..."
-              rows={4}
-            />
-            <div className="flex justify-between mt-1.5">
-              <span className="text-[11px] text-text-dim">{toPersianNumber(message.length)} کاراکتر</span>
-              <span className="text-[11px] text-text-dim">{toPersianNumber(Math.ceil(message.length / 70))} بخش</span>
+          {/* Message (not for pattern) */}
+          {mode !== 'pattern' && (
+            <div>
+              <label className="block text-xs font-medium text-text-muted mb-1.5">متن پیام</label>
+              <Textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="متن پیامک خود را وارد کنید..."
+                rows={4}
+              />
+              <div className="flex justify-between mt-1.5">
+                <span className="text-[11px] text-text-dim">{toPersianNumber(message.length)} کاراکتر</span>
+                <span className="text-[11px] text-text-dim">{toPersianNumber(Math.ceil(message.length / 70))} بخش</span>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Send Button */}
           <Button

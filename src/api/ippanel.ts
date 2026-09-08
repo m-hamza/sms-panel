@@ -64,7 +64,7 @@ class IPPanelAPI {
     return this.request('/api/payment/credit/mine');
   }
 
-  // Send SMS - Webservice
+  // Send SMS - Webservice (Single/Bulk)
   async sendSMS(data: {
     from_number: string;
     message: string;
@@ -125,6 +125,38 @@ class IPPanelAPI {
         params: data.params,
         send_time: data.send_time,
       }),
+    });
+  }
+
+  // Send SMS - Pattern
+  async sendPatternSMS(data: {
+    from_number: string;
+    code: string;
+    recipients: string[];
+    params: Record<string, string>;
+    phonebook?: {
+      id: number;
+      name?: string;
+      pre?: string;
+      email?: string;
+      options?: Record<string, string>;
+    };
+  }): Promise<ApiResponse> {
+    const body: any = {
+      sending_type: 'pattern',
+      from_number: data.from_number,
+      code: data.code,
+      recipients: data.recipients,
+      params: data.params,
+    };
+
+    if (data.phonebook) {
+      body.phonebook = data.phonebook;
+    }
+
+    return this.request('/api/send', {
+      method: 'POST',
+      body: JSON.stringify(body),
     });
   }
 
@@ -199,25 +231,6 @@ class IPPanelAPI {
   // Patterns
   async getPatterns(page = 1, perPage = 100): Promise<ApiResponse> {
     return this.request(`/api/pattern/list?page=${page}&per_page=${perPage}`);
-  }
-
-  // Send Pattern SMS
-  async sendPatternSMS(data: {
-    pattern_code: string;
-    from_number: string;
-    input_data: Record<string, string>;
-    recipient: string;
-  }): Promise<ApiResponse> {
-    return this.request('/api/send', {
-      method: 'POST',
-      body: JSON.stringify({
-        sending_type: 'pattern',
-        pattern_code: data.pattern_code,
-        from_number: data.from_number,
-        input_data: data.input_data,
-        params: { recipients: [data.recipient] },
-      }),
-    });
   }
 }
 
