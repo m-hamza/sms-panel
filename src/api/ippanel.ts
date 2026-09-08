@@ -165,6 +165,11 @@ class IPPanelAPI {
     return this.request(`/api/phonebooks/list-new?page=${page}&per_page=${perPage}`);
   }
 
+  // Phonebook Numbers - Get contacts from a specific phonebook
+  async getPhonebookNumbers(phonebookId: string, page = 1, perPage = 1000): Promise<ApiResponse> {
+    return this.request(`/api/phonebooks/numbers/contact-list?phonebook_id=${phonebookId}&page=${page}&per_page=${perPage}`);
+  }
+
   // Reports - Outbox
   async getOutboxReport(data: {
     page?: number;

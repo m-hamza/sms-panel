@@ -11,7 +11,7 @@ import toast from 'react-hot-toast';
 import { Card, Button, Input, Textarea, Select, Badge, SectionHeader, StatCard } from '../components/ui';
 import { toPersianNumber, formatPhoneNumber, parsePhoneNumbers } from '../utils/date';
 
-type SendMode = 'single' | 'bulk' | 'phonebook' | 'mobile' | 'peer' | 'pattern';
+type SendMode = 'single' | 'bulk' | 'phonebook' | 'phonebook_select' | 'mobile' | 'peer' | 'pattern';
 
 export default function DashboardPage() {
   const { numbers, phonebooks, credit } = useAuthStore();
@@ -38,7 +38,8 @@ export default function DashboardPage() {
     { id: 'single' as SendMode, title: 'ارسال تکی', desc: 'به یک شماره', icon: Send, accent: 'indigo' as const },
     { id: 'bulk' as SendMode, title: 'ارسال دسته‌جمعی', desc: 'به چند شماره', icon: Zap, accent: 'violet' as const },
     { id: 'peer' as SendMode, title: 'همتا‌به‌همتا', desc: 'پیام متفاوت به هر شماره', icon: Users, accent: 'sky' as const },
-    { id: 'phonebook' as SendMode, title: 'دفترچه تلفن', desc: 'ارسال به مخاطبین', icon: BookOpen, accent: 'emerald' as const },
+    { id: 'phonebook' as SendMode, title: 'دفترچه تلفن', desc: 'ارسال به همه مخاطبین', icon: BookOpen, accent: 'emerald' as const },
+    { id: 'phonebook_select' as SendMode, title: 'دفترچه تلفن موردی', desc: 'انتخاب مخاطبین خاص', icon: FileText, accent: 'rose' as const },
     { id: 'mobile' as SendMode, title: 'از گوشی', desc: 'مخاطبین گوشی', icon: Smartphone, accent: 'amber' as const },
     { id: 'pattern' as SendMode, title: 'الگوی پیام', desc: 'ارسال با الگوی آماده', icon: Sparkles, accent: 'purple' as const },
   ];
@@ -144,6 +145,11 @@ function SendForm({ mode, numbers, phonebooks, patterns, onClose }: {
   // Pattern fields
   const [selectedPattern, setSelectedPattern] = useState('');
   const [patternParams, setPatternParams] = useState<Record<string, string>>({});
+  
+  // Phonebook select fields
+  const [phonebookNumbers, setPhonebookNumbers] = useState<any[]>([]);
+  const [selectedPhonebookNumbers, setSelectedPhonebookNumbers] = useState<string[]>([]);
+  const [loadingPhonebookNumbers, setLoadingPhonebookNumbers] = useState(false);
 
   const loadMobileContacts = async () => {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -173,6 +179,46 @@ function SendForm({ mode, numbers, phonebooks, patterns, onClose }: {
       } else {
         toast.error('خطا در دریافت مخاطبین');
       }
+    }
+  };
+
+  const loadPhonebookNumbers = async (phonebookId: string) => {
+    if (!phonebookId) {
+      setPhonebookNumbers([]);
+      setSelectedPhonebookNumbers([]);
+      return;
+    }
+
+    setLoadingPhonebookNumbers(true);
+    try {
+      const result = await api.getPhonebookNumbers(phonebookId, 1, 1000);
+      if (result.meta.status) {
+        setPhonebookNumbers(result.data || []);
+        setSelectedPhonebookNumbers([]);
+        toast.success(`${toPersianNumber((result.data || []).length)} مخاطب بارگذاری شد`);
+      } else {
+        toast.error(result.meta.message || 'خطا در بارگذاری مخاطبین');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'خطا در بارگذاری مخاطبین');
+    } finally {
+      setLoadingPhonebookNumbers(false);
+    }
+  };
+
+  const togglePhonebookNumber = (number: string) => {
+    setSelectedPhonebookNumbers(prev => 
+      prev.includes(number) 
+        ? prev.filter(n => n !== number)
+        : [...prev, number]
+    );
+  };
+
+  const selectAllPhonebookNumbers = () => {
+    if (selectedPhonebookNumbers.length === phonebookNumbers.length) {
+      setSelectedPhonebookNumbers([]);
+    } else {
+      setSelectedPhonebookNumbers(phonebookNumbers.map((n: any) => n.number));
     }
   };
 
@@ -247,6 +293,22 @@ function SendForm({ mode, numbers, phonebooks, patterns, onClose }: {
           message,
           recipients: formattedContacts,
         });
+      } else if (mode === 'phonebook_select') {
+        if (selectedPhonebookNumbers.length === 0) {
+          toast.error('لطفاً حداقل یک مخاطب از دفترچه تلفن انتخاب کنید');
+          setIsSending(false);
+          return;
+        }
+        if (!message) {
+          toast.error('لطفاً متن پیام را وارد کنید');
+          setIsSending(false);
+          return;
+        }
+        result = await api.sendSMS({
+          from_number: formattedFromNumber,
+          message,
+          recipients: selectedPhonebookNumbers,
+        });
       } else if (mode === 'peer') {
         // Parse peer-to-peer format: phone|message
         const lines = recipients.split('\n').filter(l => l.trim());
@@ -307,6 +369,7 @@ function SendForm({ mode, numbers, phonebooks, patterns, onClose }: {
     bulk: 'ارسال دسته‌جمعی',
     peer: 'ارسال همتا‌به‌همتا',
     phonebook: 'ارسال به دفترچه تلفن',
+    phonebook_select: 'دفترچه تلفن موردی',
     mobile: 'ارسال از گوشی',
     pattern: 'ارسال با الگو',
   };
@@ -512,6 +575,82 @@ function SendForm({ mode, numbers, phonebooks, patterns, onClose }: {
                   </option>
                 ))}
               </Select>
+            </div>
+          )}
+
+          {/* Phonebook Select - Individual Selection */}
+          {mode === 'phonebook_select' && (
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-text-muted mb-1.5">دفترچه تلفن</label>
+                <Select
+                  value={selectedPhonebook}
+                  onChange={(e) => {
+                    setSelectedPhonebook(e.target.value);
+                    loadPhonebookNumbers(e.target.value);
+                  }}
+                >
+                  <option value="">انتخاب کنید...</option>
+                  {phonebooks.map((pb: any) => (
+                    <option key={pb.id} value={pb.id}>
+                      {pb.title} ({toPersianNumber(pb.count)} مخاطب)
+                    </option>
+                  ))}
+                </Select>
+              </div>
+
+              {/* Phonebook Numbers List */}
+              {selectedPhonebook && (
+                <div className="bg-surface-2 border border-border rounded-xl p-3">
+                  {loadingPhonebookNumbers ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-2 border-accent border-t-transparent"></div>
+                    </div>
+                  ) : phonebookNumbers.length === 0 ? (
+                    <p className="text-center text-sm text-text-dim py-4">مخاطبی یافت نشد</p>
+                  ) : (
+                    <>
+                      {/* Header with Select All */}
+                      <div className="flex items-center justify-between mb-3 pb-2 border-b border-border">
+                        <span className="text-xs text-text-dim">
+                          {toPersianNumber(selectedPhonebookNumbers.length)} از {toPersianNumber(phonebookNumbers.length)} انتخاب شده
+                        </span>
+                        <button
+                          onClick={selectAllPhonebookNumbers}
+                          className="text-xs text-accent hover:text-accent/80 transition-colors"
+                        >
+                          {selectedPhonebookNumbers.length === phonebookNumbers.length ? 'لغو انتخاب همه' : 'انتخاب همه'}
+                        </button>
+                      </div>
+
+                      {/* Numbers List */}
+                      <div className="space-y-1.5 max-h-64 overflow-y-auto">
+                        {phonebookNumbers.map((contact: any) => (
+                          <label 
+                            key={contact.id} 
+                            className="flex items-center gap-3 p-2 rounded-lg hover:bg-surface cursor-pointer transition-colors"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedPhonebookNumbers.includes(contact.number)}
+                              onChange={() => togglePhonebookNumber(contact.number)}
+                              className="w-4 h-4 rounded border-border"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm text-text truncate">
+                                {contact.name || 'بدون نام'}
+                              </p>
+                              <p className="text-xs text-text-dim font-mono" dir="ltr">
+                                {contact.number}
+                              </p>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
