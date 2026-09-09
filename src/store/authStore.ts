@@ -25,6 +25,7 @@ interface AuthState {
   dataLoaded: boolean;
 
   login: (apiKey: string) => Promise<boolean>;
+  loginWithCredentials: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
   switchAccount: (id: string) => void;
   addAccount: (name: string, apiKey: string) => Promise<boolean>;
@@ -111,6 +112,36 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({ isLoading: false, error: result.meta.message });
         return false;
       }
+    } catch (err: any) {
+      set({ isLoading: false, error: err.message || 'خطا در اتصال' });
+      return false;
+    }
+  },
+
+  loginWithCredentials: async (username: string, password: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const result = await api.login(username, password);
+      
+      if (result.meta.status && result.data) {
+        const { method, token } = result.data;
+        
+        if (method === 'login') {
+          // Direct login - use the token as API key
+          return await get().login(token);
+        } else if (method === 'sms') {
+          // SMS OTP required - for now, show message
+          set({ isLoading: false, error: 'ورود دو مرحله‌ای با پیامک فعال است. لطفاً از API Key استفاده کنید.' });
+          return false;
+        } else if (method === 'ga') {
+          // Google Authenticator required - for now, show message
+          set({ isLoading: false, error: 'ورود دو مرحله‌ای با Google Authenticator فعال است. لطفاً از API Key استفاده کنید.' });
+          return false;
+        }
+      }
+      
+      set({ isLoading: false, error: result.meta.message || 'نام کاربری یا رمز عبور اشتباه است' });
+      return false;
     } catch (err: any) {
       set({ isLoading: false, error: err.message || 'خطا در اتصال' });
       return false;
