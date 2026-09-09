@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate, useSearchParams } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
@@ -53,6 +53,7 @@ function App() {
     },
   };
 
+  // If not authenticated, show login page (handles both login and addAccount modes)
   if (!isAuthenticated) {
     return (
       <HashRouter>
@@ -64,6 +65,7 @@ function App() {
     );
   }
 
+  // If send mode is active, show send page
   if (sendMode) {
     return (
       <HashRouter>
@@ -88,9 +90,9 @@ function App() {
           <Routes>
             <Route path="/" element={<DashboardPage onNavigate={(mode) => setSendMode(mode)} />} />
             <Route path="/dashboard" element={<DashboardPage onNavigate={(mode) => setSendMode(mode)} />} />
-            <Route path="/send/:mode" element={<DashboardPage onNavigate={(mode) => setSendMode(mode)} />} />
             <Route path="/reports" element={<ReportsPage />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/login" element={<LoginPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>

@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import {
   User, Phone, LogOut, Plus, Trash2,
-  Edit3, Check, X, Loader2, Shield, ChevronDown,
-  Wallet, Radio, Activity, Key, Lock, Headphones,
+  Edit3, Check, X, Shield, ChevronDown,
+  Wallet, Radio, Activity, Headphones,
   Globe, Moon, Sun, ExternalLink
 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -11,28 +12,19 @@ import { Card, Button, Badge } from '../components/ui';
 import { toPersianNumber } from '../utils/date';
 import BottomNav from '../components/BottomNav';
 
-type AddAccountTab = 'apikey' | 'credentials';
-
 export default function ProfilePage() {
+  const navigate = useNavigate();
   const {
     userInfo, credit, numbers, accounts, currentAccountId,
-    logout, switchAccount, addAccount, addAccountWithCredentials, removeAccount, renameAccount
+    logout, switchAccount, removeAccount, renameAccount
   } = useAuthStore();
 
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     return (localStorage.getItem('theme') as 'dark' | 'light') || 'dark';
   });
 
-  const [showAddAccount, setShowAddAccount] = useState(false);
-  const [addAccountTab, setAddAccountTab] = useState<AddAccountTab>('apikey');
-  const [newAccountName, setNewAccountName] = useState('');
-  const [newAccountKey, setNewAccountKey] = useState('');
-  const [newAccountUsername, setNewAccountUsername] = useState('');
-  const [newAccountPassword, setNewAccountPassword] = useState('');
-  const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
-  const [showAccounts, setShowAccounts] = useState(true);
   const [showNumbers, setShowNumbers] = useState(false);
 
   useEffect(() => {
@@ -43,47 +35,6 @@ export default function ProfilePage() {
 
   const toggleTheme = () => {
     setTheme(prev => prev === 'dark' ? 'light' : 'dark');
-  };
-
-  const handleAddAccount = async () => {
-    if (!newAccountName.trim() || !newAccountKey.trim()) {
-      toast.error('لطفاً نام و کلید API را وارد کنید');
-      return;
-    }
-    setIsAdding(true);
-    const success = await addAccount(newAccountName.trim(), newAccountKey.trim());
-    if (success) {
-      toast.success('حساب با موفقیت اضافه شد');
-      resetAddAccountForm();
-    }
-    setIsAdding(false);
-  };
-
-  const handleAddAccountWithCredentials = async () => {
-    if (!newAccountName.trim() || !newAccountUsername.trim() || !newAccountPassword.trim()) {
-      toast.error('لطفاً تمام فیلدها را پر کنید');
-      return;
-    }
-    setIsAdding(true);
-    const success = await addAccountWithCredentials(
-      newAccountName.trim(),
-      newAccountUsername.trim(),
-      newAccountPassword.trim()
-    );
-    if (success) {
-      toast.success('حساب با موفقیت اضافه شد');
-      resetAddAccountForm();
-    }
-    setIsAdding(false);
-  };
-
-  const resetAddAccountForm = () => {
-    setShowAddAccount(false);
-    setNewAccountName('');
-    setNewAccountKey('');
-    setNewAccountUsername('');
-    setNewAccountPassword('');
-    setAddAccountTab('apikey');
   };
 
   const handleRename = (id: string) => {
@@ -114,6 +65,11 @@ export default function ProfilePage() {
     toast.success('خروج موفق');
   };
 
+  const handleAddAccount = () => {
+    // Navigate to login page with addAccount mode
+    navigate('/login?mode=addAccount');
+  };
+
   return (
     <div className="px-4 pt-6 pb-28 space-y-5">
       <header className="animate-fade-in">
@@ -121,6 +77,7 @@ export default function ProfilePage() {
         <p className="text-xs text-text-dim mt-0.5">مدیریت حساب و تنظیمات</p>
       </header>
 
+      {/* Account Management */}
       <Card className="animate-fade-in-up" style={{ animationDelay: '50ms' }}>
         <div className="flex items-center gap-2 mb-4">
           <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
@@ -194,109 +151,18 @@ export default function ProfilePage() {
             </div>
           ))}
 
-          {showAddAccount ? (
-            <div className="bg-surface-2 border border-border rounded-xl p-3 space-y-3 animate-fade-in">
-              <input
-                value={newAccountName}
-                onChange={(e) => setNewAccountName(e.target.value)}
-                placeholder="نام حساب"
-                className="input text-sm"
-              />
-
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setAddAccountTab('apikey')}
-                  className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all ${
-                    addAccountTab === 'apikey'
-                      ? 'bg-accent/10 text-accent border border-accent/30'
-                      : 'bg-surface border border-border text-text-dim hover:text-text'
-                  }`}
-                >
-                  کلید API
-                </button>
-                <button
-                  onClick={() => setAddAccountTab('credentials')}
-                  className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all ${
-                    addAccountTab === 'credentials'
-                      ? 'bg-accent/10 text-accent border border-accent/30'
-                      : 'bg-surface border border-border text-text-dim hover:text-text'
-                  }`}
-                >
-                  نام کاربری و رمز
-                </button>
-              </div>
-
-              {addAccountTab === 'apikey' && (
-                <div className="relative">
-                  <Key className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-dim pointer-events-none" />
-                  <input
-                    value={newAccountKey}
-                    onChange={(e) => setNewAccountKey(e.target.value)}
-                    placeholder="کلید API"
-                    className="input text-sm font-mono pr-9"
-                    dir="ltr"
-                  />
-                </div>
-              )}
-
-              {addAccountTab === 'credentials' && (
-                <div className="space-y-2">
-                  <div className="relative">
-                    <User className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-dim pointer-events-none" />
-                    <input
-                      value={newAccountUsername}
-                      onChange={(e) => setNewAccountUsername(e.target.value)}
-                      placeholder="نام کاربری"
-                      className="input text-sm pr-9"
-                    />
-                  </div>
-                  <div className="relative">
-                    <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-dim pointer-events-none" />
-                    <input
-                      type="password"
-                      value={newAccountPassword}
-                      onChange={(e) => setNewAccountPassword(e.target.value)}
-                      placeholder="رمز عبور"
-                      className="input text-sm pr-9"
-                    />
-                  </div>
-                </div>
-              )}
-
-              <div className="flex gap-2">
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={addAccountTab === 'apikey' ? handleAddAccount : handleAddAccountWithCredentials}
-                  disabled={isAdding}
-                  loading={isAdding}
-                  icon={<Plus className="w-3.5 h-3.5" />}
-                  className="flex-1"
-                >
-                  افزودن
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={resetAddAccountForm}
-                  className="flex-1"
-                >
-                  انصراف
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <button
-              onClick={() => setShowAddAccount(true)}
-              className="w-full bg-surface-2 border border-dashed border-border-strong rounded-xl p-3 flex items-center justify-center gap-2 text-xs text-text-dim hover:text-text hover:border-accent/30 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              افزودن حساب جدید
-            </button>
-          )}
+          {/* Add Account Button */}
+          <button
+            onClick={handleAddAccount}
+            className="w-full bg-surface-2 border border-dashed border-border-strong rounded-xl p-3 flex items-center justify-center gap-2 text-xs text-text-dim hover:text-text hover:border-accent/30 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            افزودن حساب جدید
+          </button>
         </div>
       </Card>
 
+      {/* User Info */}
       <Card className="relative overflow-hidden animate-fade-in-up" style={{ animationDelay: '100ms' }}>
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-500/5 pointer-events-none"></div>
         
@@ -319,6 +185,7 @@ export default function ProfilePage() {
         </div>
       </Card>
 
+      {/* Credit */}
       {credit && credit.credit && Number(credit.credit) > 0 && (
         <Card className="animate-fade-in-up" style={{ animationDelay: '150ms' }}>
           <div className="flex items-center gap-2 mb-3">
@@ -333,6 +200,7 @@ export default function ProfilePage() {
         </Card>
       )}
 
+      {/* Numbers */}
       <Card className="animate-fade-in-up" style={{ animationDelay: '200ms' }}>
         <button
           onClick={() => setShowNumbers(!showNumbers)}
@@ -366,6 +234,7 @@ export default function ProfilePage() {
         )}
       </Card>
 
+      {/* Theme Toggle */}
       <Card className="animate-fade-in-up" style={{ animationDelay: '250ms' }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -391,6 +260,7 @@ export default function ProfilePage() {
         </div>
       </Card>
 
+      {/* Support */}
       <Card className="animate-fade-in-up" style={{ animationDelay: '300ms' }}>
         <div className="flex items-center gap-2 mb-3">
           <Headphones className="w-5 h-5 text-indigo-400" />
@@ -446,6 +316,7 @@ export default function ProfilePage() {
         </div>
       </Card>
 
+      {/* Logout */}
       <div className="animate-fade-in-up" style={{ animationDelay: '350ms' }}>
         <Button
           variant="danger"

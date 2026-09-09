@@ -41,6 +41,14 @@ class IPPanelAPI {
     });
   }
 
+  // تایید OTP
+  async confirmOtp(token: string, otpCode: string) {
+    return this.request('/api/acl/auth/confirm_otp', { 
+      method: 'POST', 
+      body: JSON.stringify({ token, otp_code: otpCode }) 
+    });
+  }
+
   // خطوط
   async getNumbers(page = 1, perPage = 100) { 
     return this.request(`/api/number/numbers?page=${page}&per_page=${perPage}`); 
