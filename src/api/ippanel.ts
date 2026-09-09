@@ -1,7 +1,7 @@
 const BASE_URL = 'https://edge.ippanel.com/v1';
 
 export interface ApiResponse<T = any> {
-  data: T;
+   T;
   meta: {
     status: boolean;
     message: string;
@@ -49,7 +49,23 @@ class IPPanelAPI {
     return data;
   }
 
-  // Auth
+  // Auth - Login with username and password
+  async login(data: { username: string; password: string }): Promise<ApiResponse<{ method: 'ga' | 'sms' | 'login'; token: string }>> {
+    return this.request('/api/acl/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ username: data.username, password: data.password }),
+    });
+  }
+
+  // Auth - Verify 2FA
+  async verify2FA(data: { method: 'ga' | 'sms'; token: string; code: string }): Promise<ApiResponse<{ token: string }>> {
+    return this.request('/api/acl/auth/verify', {
+      method: 'POST',
+      body: JSON.stringify({ method: data.method, token: data.token, code: data.code }),
+    });
+  }
+
+  // Auth - Check token validity
   async checkToken(): Promise<ApiResponse> {
     return this.request('/api/acl/auth/check_token', { method: 'POST' });
   }
@@ -64,13 +80,8 @@ class IPPanelAPI {
     return this.request('/api/payment/credit/mine');
   }
 
-  // Send SMS - Webservice (Single/Bulk)
-  async sendSMS(data: {
-    from_number: string;
-    message: string;
-    recipients: string[];
-    send_time?: string;
-  }): Promise<ApiResponse> {
+  // Send SMS - Webservice
+  async sendSMS(data: { from_number: string; message: string; recipients: string[]; send_time?: string }): Promise<ApiResponse> {
     return this.request('/api/send', {
       method: 'POST',
       body: JSON.stringify({
@@ -84,14 +95,7 @@ class IPPanelAPI {
   }
 
   // Send SMS - Peer to Peer
-  async sendPeerToPeer(data: {
-    from_number: string;
-    params: Array<{
-      recipients: string[];
-      message: string;
-    }>;
-    send_time?: string;
-  }): Promise<ApiResponse> {
+  async sendPeerToPeer(data: { from_number: string; params: Array<{ recipients: string[]; message: string }>; send_time?: string }): Promise<ApiResponse> {
     return this.request('/api/send', {
       method: 'POST',
       body: JSON.stringify({
@@ -104,18 +108,7 @@ class IPPanelAPI {
   }
 
   // Send SMS - Phonebook
-  async sendToPhonebook(data: {
-    from_number: string;
-    message: string;
-    params: Array<{
-      phonebook_id: string;
-      type: 'all' | 'detail';
-      start?: string;
-      size?: string;
-      number_ids?: string[];
-    }>;
-    send_time?: string;
-  }): Promise<ApiResponse> {
+  async sendToPhonebook(data: { from_number: string; message: string; params: Array<{ phonebook_id: string; type: 'all' | 'detail'; start?: string; size?: string; number_ids?: string[] }>; send_time?: string }): Promise<ApiResponse> {
     return this.request('/api/send', {
       method: 'POST',
       body: JSON.stringify({
@@ -129,19 +122,7 @@ class IPPanelAPI {
   }
 
   // Send SMS - Pattern
-  async sendPatternSMS(data: {
-    from_number: string;
-    code: string;
-    recipients: string[];
-    params: Record<string, string>;
-    phonebook?: {
-      id: number;
-      name?: string;
-      pre?: string;
-      email?: string;
-      options?: Record<string, string>;
-    };
-  }): Promise<ApiResponse> {
+  async sendPatternSMS(data: { from_number: string; code: string; recipients: string[]; params: Record<string, string>; phonebook?: any }): Promise<ApiResponse> {
     const body: any = {
       sending_type: 'pattern',
       from_number: data.from_number,
@@ -149,15 +130,8 @@ class IPPanelAPI {
       recipients: data.recipients,
       params: data.params,
     };
-
-    if (data.phonebook) {
-      body.phonebook = data.phonebook;
-    }
-
-    return this.request('/api/send', {
-      method: 'POST',
-      body: JSON.stringify(body),
-    });
+    if (data.phonebook) body.phonebook = data.phonebook;
+    return this.request('/api/send', { method: 'POST', body: JSON.stringify(body) });
   }
 
   // Phonebooks
@@ -165,28 +139,20 @@ class IPPanelAPI {
     return this.request(`/api/phonebooks/list-new?page=${page}&per_page=${perPage}`);
   }
 
-  // Phonebook Numbers - Get contacts from a specific phonebook
+  // Phonebook Numbers
   async getPhonebookNumbers(phonebookId: string, page = 1, perPage = 1000): Promise<ApiResponse> {
     return this.request(`/api/phonebooks/numbers/contact-list?phonebook_id=${phonebookId}&page=${page}&per_page=${perPage}`);
   }
 
   // Reports - Outbox
-  async getOutboxReport(data: {
-    page?: number;
-    limit?: number;
-    filters?: Record<string, any>;
-  }): Promise<ApiResponse> {
+  async getOutboxReport(data: { page?: number; limit?: number; filters?: Record<string, any> }): Promise<ApiResponse> {
     return this.request('/api/report/new_list', {
       method: 'POST',
-      body: JSON.stringify({
-        page: data.page || 1,
-        limit: data.limit || 20,
-        filters: data.filters || {},
-      }),
+      body: JSON.stringify({ page: data.page || 1, limit: data.limit || 20, filters: data.filters || {} }),
     });
   }
 
-  // Reports - Outbox by ID (Full details)
+  // Reports - Outbox by ID
   async getOutboxReportById(id: string): Promise<ApiResponse> {
     return this.request(`/api/report/by_bulk?messages_outbox_id=${id}`, { method: 'GET' });
   }
@@ -202,47 +168,24 @@ class IPPanelAPI {
   }
 
   // Reports - Inbox
-  async getInboxReport(data: {
-    page?: number;
-    limit?: number;
-    filters?: Record<string, any>;
-  }): Promise<ApiResponse> {
+  async getInboxReport(data: { page?: number; limit?: number; filters?: Record<string, any> }): Promise<ApiResponse> {
     return this.request('/api/report/inbox', {
       method: 'POST',
-      body: JSON.stringify({
-        page: data.page || 1,
-        limit: data.limit || 20,
-        filters: data.filters || {},
-      }),
+      body: JSON.stringify({ page: data.page || 1, limit: data.limit || 20, filters: data.filters || {} }),
     });
   }
 
   // Calculate Price
-  async calculatePrice(data: {
-    from_number: string;
-    message: string;
-    recipients: string[];
-  }): Promise<ApiResponse> {
+  async calculatePrice(data: { from_number: string; message: string; recipients: string[] }): Promise<ApiResponse> {
     return this.request('/api/send/calculate-price', {
       method: 'POST',
-      body: JSON.stringify({
-        from_number: data.from_number,
-        message: data.message,
-        recipients: data.recipients,
-      }),
+      body: JSON.stringify({ from_number: data.from_number, message: data.message, recipients: data.recipients }),
     });
   }
 
   // Patterns - List all patterns
-  async getPatterns(page = 1, perPage = 100, filters?: {
-    code?: string;
-    title?: string;
-    is_share?: boolean;
-    state?: string;
-    type?: string;
-  }): Promise<ApiResponse> {
+  async getPatterns(page = 1, perPage = 100, filters?: { code?: string; title?: string; is_share?: boolean; state?: string; type?: string }): Promise<ApiResponse> {
     let url = `/api/patterns?page=${page}&per_page=${perPage}`;
-    
     if (filters) {
       if (filters.code) url += `&filter[code]=${filters.code}`;
       if (filters.title) url += `&filter[title]=${filters.title}`;
@@ -250,7 +193,6 @@ class IPPanelAPI {
       if (filters.state) url += `&filter[state]=${filters.state}`;
       if (filters.type) url += `&filter[type]=${filters.type}`;
     }
-    
     return this.request(url);
   }
 
