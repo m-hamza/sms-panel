@@ -1,10 +1,9 @@
 import { useAuthStore } from '../store/authStore';
 import {
   Send, Users, BookOpen, Smartphone, Zap,
-  MessageSquare, Wallet, Radio, Sparkles,
-  FileText, CheckSquare
+  Wallet, Radio, Sparkles, CheckSquare
 } from 'lucide-react';
-import { Card, SectionHeader, StatCard } from '../components/ui';
+import { Card, StatCard } from '../components/ui';
 import { toPersianNumber } from '../utils/date';
 
 type SendMode = 'single' | 'bulk' | 'phonebook' | 'phonebook_select' | 'mobile' | 'peer' | 'pattern';
@@ -38,7 +37,6 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
 
   return (
     <div className="px-4 pt-6 pb-28 space-y-6">
-      {/* Hero Header */}
       <header className="animate-fade-in">
         <div className="flex items-start justify-between mb-1">
           <div>
@@ -57,7 +55,6 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
         </div>
       </header>
 
-      {/* Stats Grid - Show immediately with cached or loading data */}
       <div className="grid grid-cols-2 gap-3 stagger">
         <StatCard
           label="خط فعال"
@@ -73,20 +70,19 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
         />
       </div>
 
-      {/* Send Modes */}
       <section className="animate-fade-in-up" style={{ animationDelay: '100ms' }}>
-        <SectionHeader title="ارسال پیامک" />
+        <h2 className="text-sm font-medium text-text-muted mb-3 text-center">امکانات ارسال</h2>
         <div className="grid grid-cols-2 gap-3">
           {modes.map((mode) => (
             <button
               key={mode.id}
               onClick={() => onNavigate(mode.id)}
-              className="card card-interactive p-4 text-right group"
+              className="card card-interactive p-4 flex flex-col items-center text-center group"
             >
-              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${accentColors[mode.accent]} flex items-center justify-center mb-3 shadow-lg group-hover:scale-105 transition-transform`}>
-                <mode.icon className="w-5 h-5 text-white" strokeWidth={1.5} />
+              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${accentColors[mode.accent]} flex items-center justify-center mb-3 shadow-lg group-hover:scale-110 transition-transform`}>
+                <mode.icon className="w-6 h-6 text-white" strokeWidth={1.5} />
               </div>
-              <h3 className="text-sm font-medium text-text mb-0.5">{mode.title}</h3>
+              <h3 className="text-sm font-medium text-text mb-1">{mode.title}</h3>
               <p className="text-[11px] text-text-dim">{mode.desc}</p>
             </button>
           ))}

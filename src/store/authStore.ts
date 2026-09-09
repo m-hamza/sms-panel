@@ -106,7 +106,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           saveToStorage(accounts, id);
         }
 
-        // Load user data
+        // بارگذاری اطلاعات کاربر
         await get().loadUserData();
         return true;
       } else {
@@ -128,14 +128,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         const { method, token } = result.data;
         
         if (method === 'login') {
-          // Direct login - use the token as API key
+          // ورود مستقیم - استفاده از توکن به عنوان کلید API
           return await get().login(token);
         } else if (method === 'sms') {
-          // SMS OTP required - for now, show message
+          // نیاز به OTP پیامک - در حال حاضر نمایش پیام
           set({ isLoading: false, error: 'ورود دو مرحله‌ای با پیامک فعال است. لطفاً از API Key استفاده کنید.' });
           return false;
         } else if (method === 'ga') {
-          // Google Authenticator required - for now, show message
+          // نیاز به Google Authenticator - در حال حاضر نمایش پیام
           set({ isLoading: false, error: 'ورود دو مرحله‌ای با Google Authenticator فعال است. لطفاً از API Key استفاده کنید.' });
           return false;
         }
@@ -336,8 +336,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 }));
 
-// Initialize from storage on app start - NON-BLOCKING
-// Immediately shows cached data, validates in background
+// مقداردهی اولیه از حافظه در شروع برنامه - غیرمسدودکننده
+// فوراً داده‌های کش شده را نمایش می‌دهد، اعتبارسنجی در پس‌زمینه
 export const initializeAuth = () => {
   const { accounts, activeId } = loadFromStorage();
   
@@ -346,7 +346,7 @@ export const initializeAuth = () => {
     if (account) {
       api.setApiKey(account.apiKey);
       
-      // IMMEDIATE: Set state with cached data (synchronous, instant)
+      // فوری: تنظیم state با داده‌های کش شده (همزمان، آنی)
       useAuthStore.setState({
         isAuthenticated: true,
         currentAccountId: activeId,
@@ -358,42 +358,42 @@ export const initializeAuth = () => {
         dataLoaded: !!account.numbers,
       });
       
-      // BACKGROUND: Validate token and refresh data (non-blocking)
+      // پس‌زمینه: اعتبارسنجی توکن و به‌روزرسانی داده‌ها (غیرمسدودکننده)
       validateAndRefreshInBackground();
     }
   }
 };
 
-// Background validation and refresh - runs after UI is shown
+// اعتبارسنجی و به‌روزرسانی پس‌زمینه - پس از نمایش UI اجرا می‌شود
 const validateAndRefreshInBackground = async () => {
   try {
-    // Validate token
+    // اعتبارسنجی توکن
     const result = await api.checkToken();
     
     if (result.meta.status) {
-      // Update user info if changed
+      // به‌روزرسانی اطلاعات کاربر در صورت تغییر
       useAuthStore.setState({ userInfo: result.data });
       
-      // Refresh data in background (parallel, non-blocking)
+      // به‌روزرسانی داده‌ها در پس‌زمینه (موازی، غیرمسدودکننده)
       useAuthStore.getState().loadUserData();
     } else {
-      // Token invalid - try to restore from other accounts
+      // توکن نامعتبر - تلاش برای بازیابی از حساب‌های دیگر
       const { accounts, currentAccountId } = useAuthStore.getState();
       const newAccounts = accounts.filter(a => a.id !== currentAccountId);
       const newActiveId = newAccounts.length > 0 ? newAccounts[0].id : null;
       
       if (newActiveId) {
-        // Switch to another valid account
+        // تغییر به حساب معتبر دیگر
         api.setApiKey(newAccounts[0].apiKey);
         useAuthStore.setState({
           accounts: newAccounts,
           currentAccountId: newActiveId,
         });
         saveToStorage(newAccounts, newActiveId);
-        // Re-validate the new account
+        // اعتبارسنجی مجدد حساب جدید
         validateAndRefreshInBackground();
       } else {
-        // No valid accounts, logout
+        // هیچ حساب معتبری وجود ندارد، خروج
         useAuthStore.setState({
           isAuthenticated: false,
           currentAccountId: null,
@@ -409,8 +409,8 @@ const validateAndRefreshInBackground = async () => {
       }
     }
   } catch {
-    // Network error - silently continue with cached data
-    // Data will be refreshed when user interacts
+    // خطای شبکه - ادامه بی‌صدا با داده‌های کش شده
+    // داده‌ها هنگام تعامل کاربر به‌روزرسانی خواهند شد
     console.log('Background validation failed, using cached data');
   }
 };
