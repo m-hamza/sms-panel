@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>پیشخوان - پنل پیامک IPPanel</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Vazirmatn', system-ui, sans-serif;
+      background: linear-gradient(135deg, #070b14 0%, #1a1a2e 100%);
+      color: #e5e7eb;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+    }
+    .container {
+      width: 1280px;
+      height: 720px;
+      background: #0c1220;
+      border-radius: 24px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 40px;
+    }
+    .title {
+      font-size: 32px;
+      font-weight: 700;
+      color: #e5e7eb;
+    }
+    .credit {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 12px 24px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .credit-icon {
+      width: 24px;
+      height: 24px;
+      background: #10b981;
+      border-radius: 6px;
+    }
+    .credit-text {
+      font-size: 18px;
+      color: #10b981;
+      font-weight: 600;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+    .stat-card {
+      background: rgba(17, 24, 39, 0.6);
+      border: 1px solid rgba(148, 163, 184, 0.08);
+      border-radius: 16px;
+      padding: 24px;
+    }
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+    .stat-value {
+      font-size: 36px;
+      font-weight: 700;
+      color: #e5e7eb;
+      margin-bottom: 8px;
+    }
+    .stat-label {
+      font-size: 14px;
+      color: #94a3b8;
+    }
+    .features {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+    .feature-card {
+      background: rgba(17, 24, 39, 0.6);
+      border: 1px solid rgba(148, 163, 184, 0.08);
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+    }
+    .feature-icon {
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      border-radius: 14px;
+      margin: 0 auto 16px;
+    }
+    .feature-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #e5e7eb;
+      margin-bottom: 8px;
+    }
+    .feature-desc {
+      font-size: 12px;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 class="title">پیشخوان</h1>
+      <div class="credit">
+        <div class="credit-icon"></div>
+        <span class="credit-text">۲,۵۰۰,۰۰۰ ریال</span>
+      </div>
+    </div>
+    
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-icon"></div>
+        <div class="stat-value">۳</div>
+        <div class="stat-label">خط فعال</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon"></div>
+        <div class="stat-value">۵</div>
+        <div class="stat-label">دفترچه تلفن</div>
+      </div>
+    </div>
+    
+    <div class="features">
+      <div class="feature-card">
+        <div class="feature-icon"></div>
+        <div class="feature-title">ارسال تکی</div>
+        <div class="feature-desc">ارسال پیامک به یک شماره</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"></div>
+        <div class="feature-title">ارسال دسته‌جمعی</div>
+        <div class="feature-desc">ارسال به چند شماره</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"></div>
+        <div class="feature-title">دفترچه تلفن</div>
+        <div class="feature-desc">ارسال به مخاطبین</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"></div>
+        <div class="feature-title">الگوی پیام</div>
+        <div class="feature-desc">ارسال با الگوی آماده</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
