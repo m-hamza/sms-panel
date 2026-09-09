@@ -1,0 +1,43 @@
+{
+  "name": "پنل پیامک IPPanel",
+  "short_name": "IPPanel",
+  "description": "پنل مدیریت و ارسال پیامک بر پایه وب‌سرویس IPPanel Edge API",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#070b14",
+  "theme_color": "#6366f1",
+  "lang": "fa",
+  "dir": "rtl",
+  "id": "ippanel-sms-panel",
+  "scope": "/",
+  "categories": ["business", "communication", "productivity"],
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "72x72 96x96 128x128 144x144 152x152 192x192 384x384 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "ارسال تکی",
+      "short_name": "تکی",
+      "url": "/#/send-single",
+      "icons": [{ "src": "/icons/icon-96x96.svg", "sizes": "96x96" }]
+    },
+    {
+      "name": "گزارشات",
+      "short_name": "گزارشات",
+      "url": "/#/reports",
+      "icons": [{ "src": "/icons/icon-96x96.svg", "sizes": "96x96" }]
+    },
+    {
+      "name": "پروفایل",
+      "short_name": "پروفایل",
+      "url": "/#/profile",
+      "icons": [{ "src": "/icons/icon-96x96.svg", "sizes": "96x96" }]
+    }
+  ]
+}

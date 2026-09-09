@@ -3,7 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#6366f1" />
+    <meta name="description" content="پنل مدیریت و ارسال پیامک بر پایه وب‌سرویس IPPanel Edge API" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="IPPanel" />
     <title>پنل پیامک IPPanel</title>
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
+    <link rel="apple-touch-icon" href="/icons/icon.svg" />
     <style>
       html, body {
         margin: 0;
@@ -31,5 +39,19 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // ثبت Service Worker
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('/sw.js')
+            .then(function(registration) {
+              console.log('[PWA] Service Worker ثبت شد:', registration.scope);
+            })
+            .catch(function(error) {
+              console.log('[PWA] خطا در ثبت Service Worker:', error);
+            });
+        });
+      }
+    </script>
   </body>
 </html>
