@@ -137,7 +137,7 @@ export default function ProfilePage() {
             <div className="bg-surface-2 border border-border rounded-xl p-3">
               <p className="text-[11px] text-text-dim mb-1">اعتبار</p>
               <p className="text-sm font-semibold text-emerald-400">
-                {credit ? toPersianNumber(Number(credit.credit).toFixed(0)) : '-'}
+                {credit?.credit ? toPersianNumber(Number(credit.credit).toFixed(0)) : '-'}
               </p>
             </div>
           </div>
@@ -157,10 +157,10 @@ export default function ProfilePage() {
             <div className="flex justify-between items-center">
               <span className="text-xs text-text-dim">اعتبار فعلی</span>
               <span className="text-sm font-medium text-text">
-                {toPersianNumber(Number(credit.credit).toFixed(0))} ریال
+                {credit.credit ? toPersianNumber(Number(credit.credit).toFixed(0)) + ' ریال' : '-'}
               </span>
             </div>
-            {credit.gift > 0 && (
+            {credit.gift && credit.gift > 0 && (
               <>
                 <div className="divider"></div>
                 <div className="flex justify-between items-center">

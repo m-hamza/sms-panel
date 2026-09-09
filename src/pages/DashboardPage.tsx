@@ -45,7 +45,7 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
             <h1 className="text-xl font-bold text-text tracking-tight">پیشخوان</h1>
             <p className="text-xs text-text-dim mt-0.5">مدیریت و ارسال پیامک</p>
           </div>
-          {credit && (
+          {credit?.credit && (
             <div className="flex items-center gap-2 bg-surface-2 border border-border rounded-xl px-3 py-2">
               <Wallet className="w-3.5 h-3.5 text-emerald-400" />
               <span className="text-xs font-medium text-text">

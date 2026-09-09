@@ -351,10 +351,10 @@ export const initializeAuth = () => {
         isAuthenticated: true,
         currentAccountId: activeId,
         accounts,
-        userInfo: account.userInfo,
-        credit: account.credit,
-        numbers: account.numbers || [],
-        phonebooks: account.phonebooks || [],
+        userInfo: account.userInfo || null,
+        credit: account.credit || null,
+        numbers: Array.isArray(account.numbers) ? account.numbers : [],
+        phonebooks: Array.isArray(account.phonebooks) ? account.phonebooks : [],
         dataLoaded: !!account.numbers,
       });
       

@@ -18,7 +18,10 @@ export function toPersianDateTime(timestamp: string | number): string {
   }
 }
 
-export function toPersianNumber(num: number | string): string {
+export function toPersianNumber(num: number | string | undefined | null): string {
+  if (num === undefined || num === null || isNaN(Number(num))) {
+    return '۰';
+  }
   return Number(num).toLocaleString('fa-IR');
 }
 

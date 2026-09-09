@@ -40,7 +40,12 @@ class IPPanelAPI {
       headers,
     });
 
-    const data = await response.json();
+    let data;
+    try {
+      data = await response.json();
+    } catch {
+      throw new Error('خطا در پردازش پاسخ سرور');
+    }
     
     if (!data.meta?.status && response.status === 401) {
       throw new Error('توکن نامعتبر یا منقضی شده است');
