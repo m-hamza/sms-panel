@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { Key, Eye, EyeOff, MessageSquare, ArrowLeft, User, Lock } from 'lucide-react';
 import { Button } from '../components/ui';
@@ -6,6 +7,8 @@ import { Button } from '../components/ui';
 type LoginTab = 'apikey' | 'credentials';
 
 export default function LoginPage() {
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuthStore();
   const [activeTab, setActiveTab] = useState<LoginTab>('apikey');
   const [apiKey, setApiKey] = useState('');
   const [showKey, setShowKey] = useState(false);
@@ -13,6 +16,12 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const { login, loginWithCredentials, isLoading, error } = useAuthStore();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleApiKeySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
