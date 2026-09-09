@@ -3,16 +3,19 @@ import { Toaster } from 'react-hot-toast';
 import { useAuthStore, initializeAuth } from './store/authStore';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
+import SendPages from './pages/SendPages';
 import ReportsPage from './pages/ReportsPage';
 import ProfilePage from './pages/ProfilePage';
 import BottomNav from './components/BottomNav';
 import { MessageSquare } from 'lucide-react';
 
 type Page = 'dashboard' | 'reports' | 'profile';
+type SendMode = 'single' | 'bulk' | 'phonebook' | 'phonebook_select' | 'mobile' | 'peer' | 'pattern';
 
 function App() {
   const { isAuthenticated } = useAuthStore();
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
+  const [sendMode, setSendMode] = useState<SendMode | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
@@ -63,16 +66,26 @@ function App() {
     );
   }
 
+  // If send mode is active, show send page (without bottom nav)
+  if (sendMode) {
+    return (
+      <div className="min-h-screen bg-bg max-w-lg mx-auto relative noise-bg">
+        <Toaster position="top-center" toastOptions={toastOptions} />
+        <SendPages mode={sendMode} onBack={() => setSendMode(null)} />
+      </div>
+    );
+  }
+
   const renderPage = () => {
     switch (currentPage) {
       case 'dashboard':
-        return <DashboardPage />;
+        return <DashboardPage onNavigate={(mode) => setSendMode(mode)} />;
       case 'reports':
         return <ReportsPage />;
       case 'profile':
         return <ProfilePage />;
       default:
-        return <DashboardPage />;
+        return <DashboardPage onNavigate={(mode) => setSendMode(mode)} />;
     }
   };
 
