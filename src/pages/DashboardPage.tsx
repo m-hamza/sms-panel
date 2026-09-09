@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { Card, StatCard } from '../components/ui';
 import { toPersianNumber } from '../utils/date';
+import BottomNav from '../components/BottomNav';
 
 type SendMode = 'single' | 'bulk' | 'phonebook' | 'phonebook_select' | 'mobile' | 'peer' | 'pattern';
 
@@ -88,6 +89,7 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
           ))}
         </div>
       </section>
+      <BottomNav />
     </div>
   );
 }

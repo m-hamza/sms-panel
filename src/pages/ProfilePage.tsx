@@ -9,6 +9,7 @@ import {
 import toast from 'react-hot-toast';
 import { Card, Button, Badge } from '../components/ui';
 import { toPersianNumber } from '../utils/date';
+import BottomNav from '../components/BottomNav';
 
 type AddAccountTab = 'apikey' | 'credentials';
 
@@ -456,6 +457,7 @@ export default function ProfilePage() {
           خروج از حساب
         </Button>
       </div>
+      <BottomNav />
     </div>
   );
 }

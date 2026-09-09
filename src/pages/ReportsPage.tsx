@@ -8,6 +8,7 @@ import {
 import toast from 'react-hot-toast';
 import { Card, Button, Input, Select, Badge, EmptyState, LoadingState, SectionHeader } from '../components/ui';
 import { toPersianDateTime, toPersianNumber, formatCost, formatPhoneNumber } from '../utils/date';
+import BottomNav from '../components/BottomNav';
 
 const STATE_MAP: Record<number, { label: string; variant: 'success' | 'warning' | 'danger' | 'neutral' | 'info'; icon: any }> = {
   0: { label: 'در حال ایجاد', variant: 'neutral', icon: Clock },
@@ -319,6 +320,7 @@ export default function ReportsPage() {
           </div>
         </div>
       )}
+      <BottomNav />
     </div>
   );
 }
