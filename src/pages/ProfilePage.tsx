@@ -129,49 +129,22 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-surface-2 border border-border rounded-xl p-3">
-              <p className="text-[11px] text-text-dim mb-1">شناسه کاربری</p>
-              <p className="text-sm font-semibold text-text">{toPersianNumber(userInfo?.user_id || 0)}</p>
-            </div>
-            <div className="bg-surface-2 border border-border rounded-xl p-3">
-              <p className="text-[11px] text-text-dim mb-1">اعتبار</p>
-              <p className="text-sm font-semibold text-emerald-400">
-                {credit?.credit ? toPersianNumber(Number(credit.credit).toFixed(0)) : '-'}
-              </p>
-            </div>
-          </div>
+
         </div>
       </Card>
 
       {/* Credit Details */}
-      {credit && (
+      {credit && credit.credit && Number(credit.credit) > 0 && (
         <Card className="animate-fade-in-up" style={{ animationDelay: '100ms' }}>
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-2 mb-3">
             <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
               <Wallet className="w-4 h-4 text-emerald-400" strokeWidth={1.5} />
             </div>
-            <h3 className="text-sm font-medium text-text">اطلاعات اعتبار</h3>
+            <h3 className="text-sm font-medium text-text">اعتبار</h3>
           </div>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-xs text-text-dim">اعتبار فعلی</span>
-              <span className="text-sm font-medium text-text">
-                {credit.credit ? toPersianNumber(Number(credit.credit).toFixed(0)) + ' ریال' : '-'}
-              </span>
-            </div>
-            {credit.gift && credit.gift > 0 && (
-              <>
-                <div className="divider"></div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-text-dim">هدیه</span>
-                  <span className="text-sm font-medium text-amber-400">
-                    {toPersianNumber(credit.gift)} ریال
-                  </span>
-                </div>
-              </>
-            )}
-          </div>
+          <p className="text-lg font-bold text-emerald-400">
+            {toPersianNumber(Number(credit.credit).toFixed(0))} ریال
+          </p>
         </Card>
       )}
 
@@ -407,127 +380,35 @@ export default function ProfilePage() {
               <Globe className="w-4 h-4 text-blue-400" />
               <span className="text-xs font-medium text-text">اطلاعات سایت</span>
             </div>
-            <p className="text-xs text-text-dim leading-relaxed mb-2">
+            <p className="text-xs text-text-dim leading-relaxed">
               این پنل پیامکی بر پایه وب‌سرویس IPPanel Edge API طراحی و پیاده‌سازی شده است. تمامی امکانات ارسال پیامک، گزارش‌گیری و مدیریت حساب از طریق API رسمی IPPanel انجام می‌شود.
             </p>
-            <a
-              href="https://ippanel.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs text-accent hover:text-accent/80 transition-colors"
-            >
-              <span>مشاهده سایت IPPanel</span>
-              <ExternalLink className="w-3 h-3" />
-            </a>
-          </div>
-
-          {/* Get SMS Panel */}
-          <div className="bg-surface-2 border border-border rounded-xl p-3">
-            <div className="flex items-center gap-2 mb-2">
-              <MessageCircle className="w-4 h-4 text-emerald-400" />
-              <span className="text-xs font-medium text-text">دریافت پنل پیامکی</span>
-            </div>
-            <div className="space-y-2 text-xs text-text-dim">
-              <div className="flex items-start gap-2">
-                <div className="w-1 h-1 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0"></div>
-                <p>خرید مستقیم از سایت IPPanel با امکان تست رایگان</p>
-              </div>
-              <div className="flex items-start gap-2">
-                <div className="w-1 h-1 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0"></div>
-                <p>فعال‌سازی آنی خطوط اختصاصی و اشتراکی</p>
-              </div>
-              <div className="flex items-start gap-2">
-                <div className="w-1 h-1 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0"></div>
-                <p>پشتیبانی ۲۴ ساعته و تضمین کیفیت ارسال</p>
-              </div>
-            </div>
-            <a
-              href="https://ippanel.com/register"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs text-accent hover:text-accent/80 transition-colors mt-2"
-            >
-              <span>ثبت‌نام در IPPanel</span>
-              <ExternalLink className="w-3 h-3" />
-            </a>
-          </div>
-
-          {/* Agency/Reseller */}
-          <div className="bg-surface-2 border border-border rounded-xl p-3">
-            <div className="flex items-center gap-2 mb-2">
-              <Award className="w-4 h-4 text-amber-400" />
-              <span className="text-xs font-medium text-text">دریافت نمایندگی</span>
-            </div>
-            <div className="space-y-2 text-xs text-text-dim">
-              <div className="flex items-start gap-2">
-                <div className="w-1 h-1 rounded-full bg-amber-400 mt-1.5 flex-shrink-0"></div>
-                <p>دریافت نمایندگی رسمی IPPanel با شرایط ویژه</p>
-              </div>
-              <div className="flex items-start gap-2">
-                <div className="w-1 h-1 rounded-full bg-amber-400 mt-1.5 flex-shrink-0"></div>
-                <p>تخفیف‌های اختصاصی و کمیسیون فروش بالا</p>
-              </div>
-              <div className="flex items-start gap-2">
-                <div className="w-1 h-1 rounded-full bg-amber-400 mt-1.5 flex-shrink-0"></div>
-                <p>پنل مدیریت نمایندگی با امکانات کامل</p>
-              </div>
-              <div className="flex items-start gap-2">
-                <div className="w-1 h-1 rounded-full bg-amber-400 mt-1.5 flex-shrink-0"></div>
-                <p>آموزش رایگان و پشتیبانی فنی تخصصی</p>
-              </div>
-            </div>
-            <a
-              href="https://ippanel.com/agency"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs text-accent hover:text-accent/80 transition-colors mt-2"
-            >
-              <span>اطلاعات بیشتر درباره نمایندگی</span>
-              <ExternalLink className="w-3 h-3" />
-            </a>
           </div>
 
           {/* Contact Info */}
           <div className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-accent/20 rounded-xl p-3">
             <div className="flex items-center gap-2 mb-2">
-              <Phone className="w-4 h-4 text-accent" />
-              <span className="text-xs font-medium text-text">تماس با پشتیبانی</span>
+              <Headphones className="w-4 h-4 text-accent" />
+              <span className="text-xs font-medium text-text">پشتیبانی فنی</span>
             </div>
             <p className="text-xs text-text-dim leading-relaxed mb-3">
-              برای دریافت پنل کاربری، نمایندگی یا هرگونه سوال و راهنمایی، با ما در تماس باشید:
+              پشتیبانی این پنل توسط <span className="text-text font-medium">استارتیچ (starteach.ir)</span> ارائه می‌شود. برای هرگونه سوال، راهنمایی یا پشتیبانی فنی با ما در تماس باشید.
             </p>
-            <div className="space-y-2">
-              <a
-                href="tel:02191009100"
-                className="flex items-center justify-between bg-surface-2 border border-border rounded-lg p-2.5 hover:border-accent/30 transition-colors group"
-              >
-                <div className="flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-emerald-400" />
-                  <div>
-                    <p className="text-xs font-medium text-text">تلفن تماس</p>
-                    <p className="text-[11px] text-text-dim">پاسخگویی ۹ صبح تا ۹ شب</p>
-                  </div>
+            <a
+              href="tel:09394812277"
+              className="flex items-center justify-between bg-surface-2 border border-border rounded-lg p-3 hover:border-accent/30 transition-colors group"
+            >
+              <div className="flex items-center gap-2">
+                <Phone className="w-4 h-4 text-emerald-400" />
+                <div>
+                  <p className="text-xs font-medium text-text">تماس با پشتیبانی</p>
+                  <p className="text-[11px] text-text-dim">پاسخگویی ۹ صبح تا ۹ شب</p>
                 </div>
-                <span className="text-sm font-mono text-accent group-hover:text-accent/80 transition-colors" dir="ltr">
-                  ۰۲۱-۹۱۰۰۹۱۰۰
-                </span>
-              </a>
-              <a
-                href="tel:09120000000"
-                className="flex items-center justify-between bg-surface-2 border border-border rounded-lg p-2.5 hover:border-accent/30 transition-colors group"
-              >
-                <div className="flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-blue-400" />
-                  <div>
-                    <p className="text-xs font-medium text-text">موبایل پشتیبانی</p>
-                    <p className="text-[11px] text-text-dim">پاسخگویی ۲۴ ساعته</p>
-                  </div>
-                </div>
-                <span className="text-sm font-mono text-accent group-hover:text-accent/80 transition-colors" dir="ltr">
-                  ۰۹۱۲-۰۰۰-۰۰۰۰
-                </span>
-              </a>
-            </div>
+              </div>
+              <span className="text-sm font-mono text-accent group-hover:text-accent/80 transition-colors" dir="ltr">
+                ۰۹۳۹۴۸۱۲۲۷۷
+              </span>
+            </a>
           </div>
         </div>
       </Card>
