@@ -44,10 +44,11 @@ export default function ReportsPage() {
       if (filters.number) filterObj.number = formatPhoneNumber(filters.number);
       if (filters.message) filterObj.message = filters.message;
       if (filters.state_id) filterObj.state_id = filters.state_id;
+      // No date filters - fetch all reports from the beginning
 
       const result = await api.getOutboxReport({
         page: pageNum,
-        limit: 20,
+        limit: 50, // Increased limit to show more reports per page
         filters: Object.keys(filterObj).length > 0 ? filterObj : undefined,
       });
 
@@ -108,7 +109,7 @@ export default function ReportsPage() {
       <header className="flex items-start justify-between animate-fade-in">
         <div>
           <h1 className="text-xl font-bold text-text tracking-tight">گزارشات</h1>
-          <p className="text-xs text-text-dim mt-0.5">تاریخچه پیام‌های ارسالی</p>
+          <p className="text-xs text-text-dim mt-0.5">تمامی پیام‌های ارسالی از ابتدا تاکنون</p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -138,13 +139,15 @@ export default function ReportsPage() {
             <Inbox className="w-5 h-5 text-indigo-400" strokeWidth={1.5} />
           </div>
           <div>
-            <p className="text-xs text-text-dim">مجموع پیام‌ها</p>
+            <p className="text-xs text-text-dim">مجموع کل گزارشات</p>
             <p className="text-lg font-bold text-text">{toPersianNumber(total)}</p>
+            <p className="text-[10px] text-text-dim">از ابتدا تاکنون</p>
           </div>
         </div>
         <div className="text-left">
-          <p className="text-[10px] text-text-dim">صفحه</p>
-          <p className="text-sm font-medium text-text">{toPersianNumber(page)} / {toPersianNumber(totalPages)}</p>
+          <p className="text-[10px] text-text-dim">صفحه فعلی</p>
+          <p className="text-sm font-medium text-text">{toPersianNumber(page)} از {toPersianNumber(totalPages)}</p>
+          <p className="text-[10px] text-text-dim">نمایش {toPersianNumber(reports.length)} مورد</p>
         </div>
       </Card>
 
@@ -261,21 +264,39 @@ export default function ReportsPage() {
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2 pt-2">
           <button
+            onClick={() => handlePageChange(1)}
+            disabled={page === 1}
+            className="w-9 h-9 rounded-xl bg-surface-2 border border-border flex items-center justify-center text-text-muted disabled:opacity-30 hover:text-text transition-colors"
+            title="صفحه اول"
+          >
+            <span className="text-xs">«</span>
+          </button>
+          <button
             onClick={() => handlePageChange(page - 1)}
             disabled={page <= 1}
             className="w-9 h-9 rounded-xl bg-surface-2 border border-border flex items-center justify-center text-text-muted disabled:opacity-30 hover:text-text transition-colors"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
-          <span className="text-xs text-text-muted px-2">
-            {toPersianNumber(page)} / {toPersianNumber(totalPages)}
-          </span>
+          <div className="flex items-center gap-1 px-3">
+            <span className="text-sm font-medium text-text">{toPersianNumber(page)}</span>
+            <span className="text-xs text-text-muted">از</span>
+            <span className="text-sm text-text-muted">{toPersianNumber(totalPages)}</span>
+          </div>
           <button
             onClick={() => handlePageChange(page + 1)}
             disabled={page >= totalPages}
             className="w-9 h-9 rounded-xl bg-surface-2 border border-border flex items-center justify-center text-text-muted disabled:opacity-30 hover:text-text transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => handlePageChange(totalPages)}
+            disabled={page === totalPages}
+            className="w-9 h-9 rounded-xl bg-surface-2 border border-border flex items-center justify-center text-text-muted disabled:opacity-30 hover:text-text transition-colors"
+            title="صفحه آخر"
+          >
+            <span className="text-xs">»</span>
           </button>
         </div>
       )}
