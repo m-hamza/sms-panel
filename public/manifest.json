@@ -3,15 +3,19 @@
   "short_name": "IPPanel",
   "description": "پنل مدیریت و ارسال پیامک بر پایه وب‌سرویس IPPanel Edge API",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
   "orientation": "portrait",
   "background_color": "#070b14",
   "theme_color": "#6366f1",
   "lang": "fa",
   "dir": "rtl",
   "id": "ippanel-sms-panel",
-  "scope": "/",
   "categories": ["business", "communication", "productivity"],
+  "iarc_rating_id": "e84b0000-0000-0000-0000-000000000000",
+  "prefer_related_applications": false,
+  "related_applications": [],
   "icons": [
     {
       "src": "/icons/icon.svg",
@@ -20,24 +24,95 @@
       "purpose": "any maskable"
     }
   ],
+  "screenshots": [
+    {
+      "src": "/screenshots/dashboard.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "پیشخوان اصلی"
+    },
+    {
+      "src": "/screenshots/reports.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "گزارشات پیامک"
+    },
+    {
+      "src": "/screenshots/profile.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "پروفایل کاربری"
+    }
+  ],
   "shortcuts": [
     {
       "name": "ارسال تکی",
       "short_name": "تکی",
       "url": "/#/send-single",
-      "icons": [{ "src": "/icons/icon-96x96.svg", "sizes": "96x96" }]
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "96x96" }]
     },
     {
       "name": "گزارشات",
       "short_name": "گزارشات",
       "url": "/#/reports",
-      "icons": [{ "src": "/icons/icon-96x96.svg", "sizes": "96x96" }]
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "96x96" }]
     },
     {
       "name": "پروفایل",
       "short_name": "پروفایل",
       "url": "/#/profile",
-      "icons": [{ "src": "/icons/icon-96x96.svg", "sizes": "96x96" }]
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "96x96" }]
     }
-  ]
+  ],
+  "file_handlers": [
+    {
+      "action": "/#/import-contacts",
+      "accept": {
+        "text/csv": [".csv"],
+        "application/vnd.ms-excel": [".xls", ".xlsx"]
+      }
+    }
+  ],
+  "launch_handler": {
+    "client_mode": ["focus-existing", "navigate-existing", "auto"]
+  },
+  "protocol_handlers": [
+    {
+      "protocol": "sms",
+      "url": "/#/send?to=%s"
+    },
+    {
+      "protocol": "tel",
+      "url": "/#/send?to=%s"
+    }
+  ],
+  "share_target": {
+    "action": "/#/share",
+    "method": "POST",
+    "enctype": "application/x-www-form-urlencoded",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "scope_extensions": [
+    {
+      "origin": "https://ippanel.com"
+    }
+  ],
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "window_controls_overlay": "enabled",
+  "tabbed_display": {
+    "enabled": true,
+    "max_tabs": 10
+  },
+  "note_taking": {
+    "enabled": false
+  }
 }

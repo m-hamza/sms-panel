@@ -46,10 +46,34 @@
           navigator.serviceWorker.register('/sw.js')
             .then(function(registration) {
               console.log('[PWA] Service Worker ثبت شد:', registration.scope);
+              
+              // ثبت Periodic Sync
+              if ('periodicSync' in registration) {
+                navigator.permissions.query({ name: 'periodic-background-sync' }).then(function(status) {
+                  if (status.state === 'granted') {
+                    registration.periodicSync.register('refresh-data', {
+                      minInterval: 24 * 60 * 60 * 1000 // هر 24 ساعت
+                    }).then(function() {
+                      console.log('[PWA] Periodic Sync ثبت شد');
+                    }).catch(function(error) {
+                      console.log('[PWA] خطا در ثبت Periodic Sync:', error);
+                    });
+                  }
+                });
+              }
             })
             .catch(function(error) {
               console.log('[PWA] خطا در ثبت Service Worker:', error);
             });
+        });
+      }
+      
+      // درخواست مجوز نوتیفیکیشن
+      if ('Notification' in window) {
+        Notification.requestPermission().then(function(permission) {
+          if (permission === 'granted') {
+            console.log('[PWA] مجوز نوتیفیکیشن داده شد');
+          }
         });
       }
     </script>
