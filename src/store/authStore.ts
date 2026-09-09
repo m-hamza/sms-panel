@@ -29,6 +29,7 @@ interface AuthState {
   logout: () => void;
   switchAccount: (id: string) => void;
   addAccount: (name: string, apiKey: string) => Promise<boolean>;
+  addAccountWithCredentials: (name: string, username: string, password: string) => Promise<boolean>;
   removeAccount: (id: string) => void;
   renameAccount: (id: string, name: string) => void;
   loadUserData: () => Promise<void>;
@@ -218,6 +219,55 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({ isLoading: false, error: result.meta.message });
         return false;
       }
+    } catch (err: any) {
+      set({ isLoading: false, error: err.message || 'خطا در اتصال' });
+      return false;
+    }
+  },
+
+  addAccountWithCredentials: async (name: string, username: string, password: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const result = await api.login(username, password);
+      
+      if (result.meta.status && result.data) {
+        const { method, token } = result.data;
+        
+        if (method === 'login') {
+          // Direct login - use the token as API key
+          api.setApiKey(token);
+          const checkResult = await api.checkToken();
+          
+          if (checkResult.meta.status) {
+            const id = Date.now().toString();
+            const account: Account = {
+              id,
+              name,
+              apiKey: token,
+              userInfo: checkResult.data,
+            };
+
+            const { accounts } = loadFromStorage();
+            accounts.push(account);
+            
+            set({
+              accounts,
+              isLoading: false,
+            });
+            saveToStorage(accounts, get().currentAccountId);
+            return true;
+          }
+        } else if (method === 'sms') {
+          set({ isLoading: false, error: 'ورود دو مرحله‌ای با پیامک فعال است. لطفاً از API Key استفاده کنید.' });
+          return false;
+        } else if (method === 'ga') {
+          set({ isLoading: false, error: 'ورود دو مرحله‌ای با Google Authenticator فعال است. لطفاً از API Key استفاده کنید.' });
+          return false;
+        }
+      }
+      
+      set({ isLoading: false, error: result.meta.message || 'نام کاربری یا رمز عبور اشتباه است' });
+      return false;
     } catch (err: any) {
       set({ isLoading: false, error: err.message || 'خطا در اتصال' });
       return false;

@@ -3,21 +3,26 @@ import { useAuthStore } from '../store/authStore';
 import {
   User, CreditCard, Phone, LogOut, Plus, Trash2,
   Edit3, Check, X, Loader2, Shield, ChevronDown,
-  Wallet, Radio, Activity
+  Wallet, Radio, Activity, Key, Lock
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Card, Button, Input, Badge, SectionHeader } from '../components/ui';
 import { toPersianNumber } from '../utils/date';
 
+type AddAccountTab = 'apikey' | 'credentials';
+
 export default function ProfilePage() {
   const {
     userInfo, credit, numbers, accounts, currentAccountId,
-    logout, switchAccount, addAccount, removeAccount, renameAccount
+    logout, switchAccount, addAccount, addAccountWithCredentials, removeAccount, renameAccount
   } = useAuthStore();
 
   const [showAddAccount, setShowAddAccount] = useState(false);
+  const [addAccountTab, setAddAccountTab] = useState<AddAccountTab>('apikey');
   const [newAccountName, setNewAccountName] = useState('');
   const [newAccountKey, setNewAccountKey] = useState('');
+  const [newAccountUsername, setNewAccountUsername] = useState('');
+  const [newAccountPassword, setNewAccountPassword] = useState('');
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
@@ -32,11 +37,36 @@ export default function ProfilePage() {
     const success = await addAccount(newAccountName.trim(), newAccountKey.trim());
     if (success) {
       toast.success('حساب با موفقیت اضافه شد');
-      setShowAddAccount(false);
-      setNewAccountName('');
-      setNewAccountKey('');
+      resetAddAccountForm();
     }
     setIsAdding(false);
+  };
+
+  const handleAddAccountWithCredentials = async () => {
+    if (!newAccountName.trim() || !newAccountUsername.trim() || !newAccountPassword.trim()) {
+      toast.error('لطفاً تمام فیلدها را پر کنید');
+      return;
+    }
+    setIsAdding(true);
+    const success = await addAccountWithCredentials(
+      newAccountName.trim(),
+      newAccountUsername.trim(),
+      newAccountPassword.trim()
+    );
+    if (success) {
+      toast.success('حساب با موفقیت اضافه شد');
+      resetAddAccountForm();
+    }
+    setIsAdding(false);
+  };
+
+  const resetAddAccountForm = () => {
+    setShowAddAccount(false);
+    setNewAccountName('');
+    setNewAccountKey('');
+    setNewAccountUsername('');
+    setNewAccountPassword('');
+    setAddAccountTab('apikey');
   };
 
   const handleRename = (id: string) => {
@@ -254,25 +284,82 @@ export default function ProfilePage() {
 
             {/* Add Account */}
             {showAddAccount ? (
-              <div className="bg-surface-2 border border-border rounded-xl p-3 space-y-2.5 animate-fade-in">
+              <div className="bg-surface-2 border border-border rounded-xl p-3 space-y-3 animate-fade-in">
                 <input
                   value={newAccountName}
                   onChange={(e) => setNewAccountName(e.target.value)}
                   placeholder="نام حساب"
                   className="input text-sm"
                 />
-                <input
-                  value={newAccountKey}
-                  onChange={(e) => setNewAccountKey(e.target.value)}
-                  placeholder="کلید API"
-                  className="input text-sm font-mono"
-                  dir="ltr"
-                />
+
+                {/* Tab Switcher */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setAddAccountTab('apikey')}
+                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all ${
+                      addAccountTab === 'apikey'
+                        ? 'bg-accent/10 text-accent border border-accent/30'
+                        : 'bg-surface border border-border text-text-dim hover:text-text'
+                    }`}
+                  >
+                    کلید API
+                  </button>
+                  <button
+                    onClick={() => setAddAccountTab('credentials')}
+                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all ${
+                      addAccountTab === 'credentials'
+                        ? 'bg-accent/10 text-accent border border-accent/30'
+                        : 'bg-surface border border-border text-text-dim hover:text-text'
+                    }`}
+                  >
+                    نام کاربری و رمز
+                  </button>
+                </div>
+
+                {/* API Key Input */}
+                {addAccountTab === 'apikey' && (
+                  <div className="relative">
+                    <Key className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-dim pointer-events-none" />
+                    <input
+                      value={newAccountKey}
+                      onChange={(e) => setNewAccountKey(e.target.value)}
+                      placeholder="کلید API"
+                      className="input text-sm font-mono pr-9"
+                      dir="ltr"
+                    />
+                  </div>
+                )}
+
+                {/* Credentials Inputs */}
+                {addAccountTab === 'credentials' && (
+                  <div className="space-y-2">
+                    <div className="relative">
+                      <User className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-dim pointer-events-none" />
+                      <input
+                        value={newAccountUsername}
+                        onChange={(e) => setNewAccountUsername(e.target.value)}
+                        placeholder="نام کاربری"
+                        className="input text-sm pr-9"
+                      />
+                    </div>
+                    <div className="relative">
+                      <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-dim pointer-events-none" />
+                      <input
+                        type="password"
+                        value={newAccountPassword}
+                        onChange={(e) => setNewAccountPassword(e.target.value)}
+                        placeholder="رمز عبور"
+                        className="input text-sm pr-9"
+                      />
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex gap-2">
                   <Button
                     variant="primary"
                     size="sm"
-                    onClick={handleAddAccount}
+                    onClick={addAccountTab === 'apikey' ? handleAddAccount : handleAddAccountWithCredentials}
                     disabled={isAdding}
                     loading={isAdding}
                     icon={<Plus className="w-3.5 h-3.5" />}
@@ -283,7 +370,7 @@ export default function ProfilePage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => { setShowAddAccount(false); setNewAccountName(''); setNewAccountKey(''); }}
+                    onClick={resetAddAccountForm}
                     className="flex-1"
                   >
                     انصراف
