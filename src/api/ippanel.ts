@@ -1,230 +1,160 @@
+// ===== API Service =====
 const BASE_URL = 'https://edge.ippanel.com/v1';
 
-export interface ApiResponse<T = any> {
-  data: T;
-  meta: {
-    status: boolean;
-    message: string;
-    message_code: string;
-    errors?: Record<string, string[]>;
-    current_page?: number;
-    last_page?: number;
-    per_page?: number;
-    total?: number;
-  };
-}
-
 class IPPanelAPI {
-  private apiKey: string = '';
+  private apiKey = '';
+  
+  setApiKey(key: string) { this.apiKey = key; }
+  getApiKey() { return this.apiKey; }
 
-  setApiKey(key: string) {
-    this.apiKey = key;
-  }
-
-  getApiKey(): string {
-    return this.apiKey;
-  }
-
-  private async request<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<ApiResponse<T>> {
+  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<any> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       'Authorization': this.apiKey,
       ...(options.headers as Record<string, string> || {}),
     };
-
-    const response = await fetch(`${BASE_URL}${endpoint}`, {
-      ...options,
-      headers,
-    });
-
+    
+    const response = await fetch(`${BASE_URL}${endpoint}`, { ...options, headers });
     let data;
-    try {
-      data = await response.json();
-    } catch {
-      throw new Error('خطا در پردازش پاسخ سرور');
+    try { 
+      data = await response.json(); 
+    } catch { 
+      throw new Error('خطا در پردازش پاسخ سرور'); 
     }
     
     if (!data.meta?.status && response.status === 401) {
       throw new Error('توکن نامعتبر یا منقضی شده است');
     }
-
+    
     return data;
   }
 
-  // Auth - Login with username and password
-  async login(username: string, password: string): Promise<ApiResponse<{ method: 'ga' | 'sms' | 'login'; token: string }>> {
-    return this.request('/api/acl/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ username, password }),
+  // احراز هویت
+  async checkToken() { 
+    return this.request('/api/acl/auth/check_token', { method: 'POST' }); 
+  }
+  
+  async login(username: string, password: string) {
+    return this.request('/api/acl/auth/login', { 
+      method: 'POST', 
+      body: JSON.stringify({ username, password }) 
     });
   }
 
-  // Auth - Check token validity
-  async checkToken(): Promise<ApiResponse> {
-    return this.request('/api/acl/auth/check_token', { method: 'POST' });
+  // خطوط
+  async getNumbers(page = 1, perPage = 100) { 
+    return this.request(`/api/number/numbers?page=${page}&per_page=${perPage}`); 
   }
 
-  // Numbers
-  async getNumbers(page = 1, perPage = 100): Promise<ApiResponse> {
-    return this.request(`/api/number/numbers?page=${page}&per_page=${perPage}`);
+  // اعتبار
+  async getCredit() { 
+    return this.request('/api/payment/credit/mine'); 
   }
 
-  // Credit
-  async getCredit(): Promise<ApiResponse> {
-    return this.request('/api/payment/credit/mine');
-  }
-
-  // Send SMS - Webservice (Single/Bulk)
+  // ارسال پیامک - Webservice
   async sendSMS(data: {
     from_number: string;
     message: string;
     recipients: string[];
     send_time?: string;
-  }): Promise<ApiResponse> {
-    return this.request('/api/send', {
-      method: 'POST',
-      body: JSON.stringify({
-        sending_type: 'webservice',
+  }) {
+    return this.request('/api/send', { 
+      method: 'POST', 
+      body: JSON.stringify({ 
+        sending_type: 'webservice', 
         from_number: data.from_number,
         message: data.message,
         params: { recipients: data.recipients },
         send_time: data.send_time,
-      }),
+      }) 
     });
   }
 
-  // Send SMS - Peer to Peer
+  // ارسال پیامک - Peer to Peer
   async sendPeerToPeer(data: {
     from_number: string;
-    params: Array<{
-      recipients: string[];
-      message: string;
-    }>;
+    params: Array<{ recipients: string[]; message: string }>;
     send_time?: string;
-  }): Promise<ApiResponse> {
-    return this.request('/api/send', {
-      method: 'POST',
-      body: JSON.stringify({
-        sending_type: 'peer_to_peer',
+  }) {
+    return this.request('/api/send', { 
+      method: 'POST', 
+      body: JSON.stringify({ 
+        sending_type: 'peer_to_peer', 
         from_number: data.from_number,
         params: data.params,
         send_time: data.send_time,
-      }),
+      }) 
     });
   }
 
-  // Send SMS - Phonebook
+  // ارسال پیامک - Phonebook
   async sendToPhonebook(data: {
     from_number: string;
     message: string;
-    params: Array<{
-      phonebook_id: string;
-      type: 'all' | 'detail';
-      start?: string;
-      size?: string;
-      number_ids?: string[];
-    }>;
+    params: Array<{ phonebook_id: string; type: 'all' | 'detail' }>;
     send_time?: string;
-  }): Promise<ApiResponse> {
-    return this.request('/api/send', {
-      method: 'POST',
-      body: JSON.stringify({
-        sending_type: 'phonebook',
+  }) {
+    return this.request('/api/send', { 
+      method: 'POST', 
+      body: JSON.stringify({ 
+        sending_type: 'phonebook', 
         from_number: data.from_number,
         message: data.message,
         params: data.params,
         send_time: data.send_time,
-      }),
+      }) 
     });
   }
 
-  // Send SMS - Pattern
+  // ارسال پیامک - Pattern
   async sendPatternSMS(data: {
     from_number: string;
     code: string;
     recipients: string[];
     params: Record<string, string>;
-  }): Promise<ApiResponse> {
-    return this.request('/api/send', {
-      method: 'POST',
-      body: JSON.stringify({
-        sending_type: 'pattern',
+  }) {
+    return this.request('/api/send', { 
+      method: 'POST', 
+      body: JSON.stringify({ 
+        sending_type: 'pattern', 
         from_number: data.from_number,
         code: data.code,
         recipients: data.recipients,
         params: data.params,
-      }),
+      }) 
     });
   }
 
-  // Phonebooks
-  async getPhonebooks(page = 1, perPage = 100): Promise<ApiResponse> {
-    return this.request(`/api/phonebooks/list-new?page=${page}&per_page=${perPage}`);
+  // دفترچه تلفن
+  async getPhonebooks(page = 1, perPage = 100) { 
+    return this.request(`/api/phonebooks/list-new?page=${page}&per_page=${perPage}`); 
   }
 
-  // Phonebook Numbers
-  async getPhonebookNumbers(phonebookId: string, page = 1, perPage = 1000): Promise<ApiResponse> {
+  async getPhonebookNumbers(phonebookId: string, page = 1, perPage = 1000) {
     return this.request(`/api/phonebooks/numbers/contact-list?phonebook_id=${phonebookId}&page=${page}&per_page=${perPage}`);
   }
 
-  // Reports - Outbox
+  // گزارشات
   async getOutboxReport(data: {
     page?: number;
     limit?: number;
     filters?: Record<string, any>;
-  }): Promise<ApiResponse> {
-    return this.request('/api/report/new_list', {
-      method: 'POST',
-      body: JSON.stringify({
-        page: data.page || 1,
-        limit: data.limit || 20,
-        filters: data.filters || {},
-      }),
+  }) {
+    return this.request('/api/report/new_list', { 
+      method: 'POST', 
+      body: JSON.stringify(data) 
     });
   }
 
-  // Reports - Outbox by ID
-  async getOutboxReportById(id: string): Promise<ApiResponse> {
-    return this.request(`/api/report/by_bulk?messages_outbox_id=${id}`, { method: 'GET' });
+  async getOutboxReportById(id: string) { 
+    return this.request(`/api/report/by_bulk?messages_outbox_id=${id}`, { method: 'GET' }); 
   }
 
-  // Calculate Price
-  async calculatePrice(data: {
-    from_number: string;
-    message: string;
-    recipients: string[];
-  }): Promise<ApiResponse> {
-    return this.request('/api/send/calculate-price', {
-      method: 'POST',
-      body: JSON.stringify({
-        from_number: data.from_number,
-        message: data.message,
-        recipients: data.recipients,
-      }),
-    });
-  }
-
-  // Patterns
-  async getPatterns(page = 1, perPage = 100, filters?: {
-    code?: string;
-    title?: string;
-    state?: string;
-    type?: string;
-  }): Promise<ApiResponse> {
+  // الگوها
+  async getPatterns(page = 1, perPage = 100, filters?: any) {
     let url = `/api/patterns?page=${page}&per_page=${perPage}`;
-    if (filters?.code) url += `&filter[code]=${filters.code}`;
-    if (filters?.title) url += `&filter[title]=${filters.title}`;
     if (filters?.state) url += `&filter[state]=${filters.state}`;
-    if (filters?.type) url += `&filter[type]=${filters.type}`;
     return this.request(url);
-  }
-
-  // Pattern by code
-  async getPatternByCode(code: string): Promise<ApiResponse> {
-    return this.request(`/api/patterns/${code}`);
   }
 }
 
