@@ -45,7 +45,7 @@ class IPPanelAPI {
   async confirmOtp(token: string, otpCode: string) {
     return this.request('/api/acl/auth/confirm_otp', { 
       method: 'POST', 
-      body: JSON.stringify({ token, otp_code: otpCode }) 
+      body: JSON.stringify({ token, otp: otpCode }) 
     });
   }
 
