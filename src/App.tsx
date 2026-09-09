@@ -7,7 +7,30 @@ import SendPages from './pages/SendPages';
 import ReportsPage from './pages/ReportsPage';
 import ProfilePage from './pages/ProfilePage';
 import BottomNav from './components/BottomNav';
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, RefreshCw } from 'lucide-react';
+
+// Subtle background refresh indicator
+function BackgroundRefreshIndicator() {
+  const { dataLoaded } = useAuthStore();
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    // Show indicator briefly when data is being refreshed
+    if (!dataLoaded) {
+      setShow(true);
+      const timer = setTimeout(() => setShow(false), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [dataLoaded]);
+
+  if (!show) return null;
+
+  return (
+    <div className="fixed top-0 left-0 right-0 z-50 pointer-events-none">
+      <div className="h-0.5 bg-gradient-to-r from-accent via-purple-500 to-accent animate-gradient"></div>
+    </div>
+  );
+}
 
 type Page = 'dashboard' | 'reports' | 'profile';
 type SendMode = 'single' | 'bulk' | 'phonebook' | 'phonebook_select' | 'mobile' | 'peer' | 'pattern';
@@ -19,20 +42,17 @@ function App() {
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    initializeAuth().then(() => setIsInitialized(true));
+    // initializeAuth is now synchronous - loads from cache instantly
+    initializeAuth();
+    setIsInitialized(true);
   }, []);
 
   if (!isInitialized) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-bg">
-        <div className="text-center animate-fade-in">
-          <div className="relative inline-flex items-center justify-center mb-4">
-            <div className="absolute w-16 h-16 rounded-full border border-accent/20 animate-spin-slow"></div>
-            <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center shadow-lg shadow-indigo-500/20">
-              <MessageSquare className="w-6 h-6 text-white" strokeWidth={1.5} />
-            </div>
-          </div>
-          <p className="text-xs text-text-dim">در حال بارگذاری...</p>
+      <div className="min-h-screen bg-bg">
+        {/* Minimal instant loading - just a subtle indicator */}
+        <div className="fixed top-0 left-0 right-0 h-0.5 z-50">
+          <div className="h-full bg-gradient-to-r from-accent via-purple-500 to-accent animate-gradient w-full"></div>
         </div>
       </div>
     );
@@ -105,6 +125,9 @@ function App() {
 
       {/* Bottom Navigation */}
       <BottomNav activePage={currentPage} onPageChange={setCurrentPage} />
+
+      {/* Background refresh indicator - subtle top bar */}
+      <BackgroundRefreshIndicator />
     </div>
   );
 }

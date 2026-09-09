@@ -336,8 +336,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 }));
 
-// Initialize from storage on app start
-export const initializeAuth = async () => {
+// Initialize from storage on app start - NON-BLOCKING
+// Immediately shows cached data, validates in background
+export const initializeAuth = () => {
   const { accounts, activeId } = loadFromStorage();
   
   if (accounts.length > 0 && activeId) {
@@ -345,52 +346,71 @@ export const initializeAuth = async () => {
     if (account) {
       api.setApiKey(account.apiKey);
       
-      try {
-        const result = await api.checkToken();
-        if (result.meta.status) {
-          useAuthStore.setState({
-            isAuthenticated: true,
-            currentAccountId: activeId,
-            accounts,
-            userInfo: result.data,
-          });
-          
-          // Load cached data
-          if (account.credit) {
-            useAuthStore.setState({ credit: account.credit });
-          }
-          if (account.numbers) {
-            useAuthStore.setState({ numbers: account.numbers });
-          }
-          if (account.phonebooks) {
-            useAuthStore.setState({ phonebooks: account.phonebooks });
-          }
-          
-          // Refresh data in background
-          useAuthStore.getState().loadUserData();
-        } else {
-          // Token invalid, remove account
-          const newAccounts = accounts.filter(a => a.id !== activeId);
-          const newActiveId = newAccounts.length > 0 ? newAccounts[0].id : null;
-          useAuthStore.setState({
-            accounts: newAccounts,
-            currentAccountId: newActiveId,
-            isAuthenticated: false,
-          });
-          saveToStorage(newAccounts, newActiveId);
-        }
-      } catch {
-        // Network error, use cached data
+      // IMMEDIATE: Set state with cached data (synchronous, instant)
+      useAuthStore.setState({
+        isAuthenticated: true,
+        currentAccountId: activeId,
+        accounts,
+        userInfo: account.userInfo,
+        credit: account.credit,
+        numbers: account.numbers || [],
+        phonebooks: account.phonebooks || [],
+        dataLoaded: !!account.numbers,
+      });
+      
+      // BACKGROUND: Validate token and refresh data (non-blocking)
+      validateAndRefreshInBackground();
+    }
+  }
+};
+
+// Background validation and refresh - runs after UI is shown
+const validateAndRefreshInBackground = async () => {
+  try {
+    // Validate token
+    const result = await api.checkToken();
+    
+    if (result.meta.status) {
+      // Update user info if changed
+      useAuthStore.setState({ userInfo: result.data });
+      
+      // Refresh data in background (parallel, non-blocking)
+      useAuthStore.getState().loadUserData();
+    } else {
+      // Token invalid - try to restore from other accounts
+      const { accounts, currentAccountId } = useAuthStore.getState();
+      const newAccounts = accounts.filter(a => a.id !== currentAccountId);
+      const newActiveId = newAccounts.length > 0 ? newAccounts[0].id : null;
+      
+      if (newActiveId) {
+        // Switch to another valid account
+        api.setApiKey(newAccounts[0].apiKey);
         useAuthStore.setState({
-          isAuthenticated: true,
-          currentAccountId: activeId,
-          accounts,
-          userInfo: account.userInfo,
-          credit: account.credit,
-          numbers: account.numbers || [],
-          phonebooks: account.phonebooks || [],
+          accounts: newAccounts,
+          currentAccountId: newActiveId,
         });
+        saveToStorage(newAccounts, newActiveId);
+        // Re-validate the new account
+        validateAndRefreshInBackground();
+      } else {
+        // No valid accounts, logout
+        useAuthStore.setState({
+          isAuthenticated: false,
+          currentAccountId: null,
+          accounts: [],
+          userInfo: null,
+          credit: null,
+          numbers: [],
+          phonebooks: [],
+          dataLoaded: false,
+        });
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(ACTIVE_KEY);
       }
     }
+  } catch {
+    // Network error - silently continue with cached data
+    // Data will be refreshed when user interacts
+    console.log('Background validation failed, using cached data');
   }
 };

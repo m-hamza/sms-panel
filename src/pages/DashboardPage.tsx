@@ -57,17 +57,17 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
         </div>
       </header>
 
-      {/* Stats Grid */}
+      {/* Stats Grid - Show immediately with cached or loading data */}
       <div className="grid grid-cols-2 gap-3 stagger">
         <StatCard
           label="خط فعال"
-          value={toPersianNumber(numbers.length)}
+          value={numbers.length > 0 ? toPersianNumber(numbers.length) : '...'}
           icon={<Radio className="w-4 h-4" strokeWidth={1.5} />}
           accent="indigo"
         />
         <StatCard
           label="دفترچه تلفن"
-          value={toPersianNumber(phonebooks.length)}
+          value={phonebooks.length > 0 ? toPersianNumber(phonebooks.length) : '...'}
           icon={<Users className="w-4 h-4" strokeWidth={1.5} />}
           accent="emerald"
         />

@@ -108,15 +108,60 @@ export function EmptyState({ icon, title, description, action }: {
   );
 }
 
-// Loading State
+// Loading State - Skeleton for better perceived performance
 export function LoadingState({ text = 'در حال بارگذاری...' }: { text?: string }) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 animate-fade-in">
-      <div className="relative">
-        <div className="w-10 h-10 rounded-full border-2 border-border"></div>
-        <div className="absolute inset-0 w-10 h-10 rounded-full border-2 border-transparent border-t-accent animate-spin"></div>
+    <div className="space-y-3 py-4 animate-fade-in">
+      {/* Skeleton cards */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="card p-4">
+          <Skeleton className="w-9 h-9 rounded-xl mb-3" />
+          <Skeleton className="w-16 h-6 mb-1" />
+          <Skeleton className="w-12 h-3" />
+        </div>
+        <div className="card p-4">
+          <Skeleton className="w-9 h-9 rounded-xl mb-3" />
+          <Skeleton className="w-16 h-6 mb-1" />
+          <Skeleton className="w-12 h-3" />
+        </div>
       </div>
-      <p className="mt-4 text-xs text-text-dim">{text}</p>
+      {/* Skeleton list items */}
+      <div className="space-y-2">
+        <div className="card p-4">
+          <div className="flex items-center gap-3">
+            <Skeleton className="w-10 h-10 rounded-xl" />
+            <div className="flex-1 space-y-2">
+              <Skeleton className="w-3/4 h-4" />
+              <Skeleton className="w-1/2 h-3" />
+            </div>
+          </div>
+        </div>
+        <div className="card p-4">
+          <div className="flex items-center gap-3">
+            <Skeleton className="w-10 h-10 rounded-xl" />
+            <div className="flex-1 space-y-2">
+              <Skeleton className="w-2/3 h-4" />
+              <Skeleton className="w-1/3 h-3" />
+            </div>
+          </div>
+        </div>
+        <div className="card p-4">
+          <div className="flex items-center gap-3">
+            <Skeleton className="w-10 h-10 rounded-xl" />
+            <div className="flex-1 space-y-2">
+              <Skeleton className="w-3/5 h-4" />
+              <Skeleton className="w-1/4 h-3" />
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* Subtle loading indicator */}
+      <div className="flex items-center justify-center pt-4">
+        <div className="flex items-center gap-2 text-text-dim">
+          <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse"></div>
+          <span className="text-xs">{text}</span>
+        </div>
+      </div>
     </div>
   );
 }

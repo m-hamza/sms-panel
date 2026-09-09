@@ -197,9 +197,9 @@ export default function ReportsPage() {
       )}
 
       {/* Reports List */}
-      {loading ? (
+      {loading && reports.length === 0 ? (
         <LoadingState text="در حال دریافت گزارشات..." />
-      ) : reports.length === 0 ? (
+      ) : reports.length === 0 && !loading ? (
         <EmptyState
           icon={<FileText className="w-6 h-6" />}
           title="گزارشی یافت نشد"
