@@ -7,7 +7,7 @@ class IPPanelAPI {
   setApiKey(key: string) { this.apiKey = key; }
   getApiKey() { return this.apiKey; }
 
-  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<any> {
+  private async request(endpoint: string, options: RequestInit = {}): Promise<any> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       'Authorization': this.apiKey,
@@ -41,11 +41,10 @@ class IPPanelAPI {
     });
   }
 
-  // تایید OTP
-  async confirmOtp(token: string, otpCode: string) {
+  async confirmOtp(token: string, otp: string) {
     return this.request('/api/acl/auth/confirm_otp', { 
       method: 'POST', 
-      body: JSON.stringify({ token, otp: otpCode }) 
+      body: JSON.stringify({ token, otp }) 
     });
   }
 
@@ -60,75 +59,45 @@ class IPPanelAPI {
   }
 
   // ارسال پیامک - Webservice
-  async sendSMS(data: {
-    from_number: string;
-    message: string;
-    recipients: string[];
-    send_time?: string;
-  }) {
+  async sendSMS(data: any) {
     return this.request('/api/send', { 
       method: 'POST', 
       body: JSON.stringify({ 
         sending_type: 'webservice', 
-        from_number: data.from_number,
-        message: data.message,
-        params: { recipients: data.recipients },
-        send_time: data.send_time,
+        ...data 
       }) 
     });
   }
 
   // ارسال پیامک - Peer to Peer
-  async sendPeerToPeer(data: {
-    from_number: string;
-    params: Array<{ recipients: string[]; message: string }>;
-    send_time?: string;
-  }) {
+  async sendPeerToPeer(data: any) {
     return this.request('/api/send', { 
       method: 'POST', 
       body: JSON.stringify({ 
         sending_type: 'peer_to_peer', 
-        from_number: data.from_number,
-        params: data.params,
-        send_time: data.send_time,
+        ...data 
       }) 
     });
   }
 
   // ارسال پیامک - Phonebook
-  async sendToPhonebook(data: {
-    from_number: string;
-    message: string;
-    params: Array<{ phonebook_id: string; type: 'all' | 'detail' }>;
-    send_time?: string;
-  }) {
+  async sendToPhonebook(data: any) {
     return this.request('/api/send', { 
       method: 'POST', 
       body: JSON.stringify({ 
         sending_type: 'phonebook', 
-        from_number: data.from_number,
-        message: data.message,
-        params: data.params,
-        send_time: data.send_time,
+        ...data 
       }) 
     });
   }
 
   // ارسال پیامک - Pattern
-  async sendPatternSMS(data: {
-    from_number: string;
-    code: string;
-    recipients: string[];
-    params: Record<string, string>;
-  }) {
+  async sendPatternSMS(data: any) {
     return this.request('/api/send', { 
       method: 'POST', 
       body: JSON.stringify({ 
         sending_type: 'pattern', 
-        from_number: data.from_number,
-        code: data.code,
-        recipients: data.recipients,
-        params: data.params,
+        ...data 
       }) 
     });
   }
@@ -143,11 +112,7 @@ class IPPanelAPI {
   }
 
   // گزارشات
-  async getOutboxReport(data: {
-    page?: number;
-    limit?: number;
-    filters?: Record<string, any>;
-  }) {
+  async getOutboxReport(data: any) {
     return this.request('/api/report/new_list', { 
       method: 'POST', 
       body: JSON.stringify(data) 
