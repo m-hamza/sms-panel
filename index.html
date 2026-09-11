@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#6366f1" />
+    <meta name="description" content="پنل مدیریت و ارسال پیامک بر پایه وب‌سرویس IPPanel Edge API" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="IPPanel" />
+    <title>پنل پیامک IPPanel</title>
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
+    <link rel="apple-touch-icon" href="/icons/icon.svg" />
+    <style>
+      html, body { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #070b14; color: #e5e7eb; }
+      html.light, html.light body { background-color: #f8fafc !important; color: #0f172a; }
+    </style>
+    <script>
+      (function () {
+        var theme = 'dark';
+        try { theme = localStorage.getItem('theme') || 'dark'; } catch(e) {}
+        document.documentElement.classList.add(theme);
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('/sw.js').then(function(reg) {
+            console.log('[PWA] SW registered:', reg.scope);
+          }).catch(function(err) {
+            console.log('[PWA] SW registration failed:', err);
+          });
+        });
+      }
+      if ('Notification' in window) {
+        Notification.requestPermission();
+      }
+    </script>
+  </body>
+</html>
